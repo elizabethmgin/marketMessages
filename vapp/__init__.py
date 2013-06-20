@@ -24,7 +24,7 @@ except:
 database.connect()
 
 lm = LoginManager()
-lm.init_app(vapp)
+lm.init_app(app)
 lm.login_view = 'login'
 
 from vapp import views, models
