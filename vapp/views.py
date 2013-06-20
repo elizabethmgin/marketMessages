@@ -16,6 +16,7 @@ def create_tables():
     List.create_table(True)
     ListRelationship.create_table(True)
     Outbox.create_table(True)
+    User.create_table(True)
     
 # create SMS message 
 # returns in unicode

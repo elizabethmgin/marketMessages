@@ -7,6 +7,27 @@ class BaseModel(Model):
     class Meta:
         database = database
         
+class User(BaseModel):
+    username = CharField()
+    password = CharField()
+    email = CharField(null=True)
+    role = IntegerField(default=ROLE_USER)
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def __unicode__(self):
+        return 'User: %s' % (self.username)
+
+    class Meta:
+            order_by = ('username',)
+        
 class Market(BaseModel):
     name = CharField(index=True)
     nickname = CharField(null=True)
@@ -21,10 +42,10 @@ class Market(BaseModel):
             order_by = ('name',)
             
 class Seller(BaseModel):
-    givenName = CharField()
-    familyName = CharField()
+    givenName = CharField(null=True)
+    familyName = CharField(null=True)
     kind = CharField(null=True)
-    product = CharField()
+    product = CharField(null=True)
     location = CharField(null=True)
     gender = CharField(null=True)
     birthDate = DateField(null=True)
@@ -48,6 +69,7 @@ class Number(BaseModel):
     isActive = BooleanField(default=True)
     seller = ForeignKeyField(Seller, related_name="sellerNumbers", null=True, index=True)
     market = ForeignKeyField(Market, related_name="marketNumbers", null=True, index=True)
+    user = ForeignKeyField(User, related_name="userNumbers", null=True, index=True)
 
     def __unicode__(self):
         return '%s : %s' % (self.createdAt, self.number)
@@ -87,7 +109,8 @@ class ListRelationship(BaseModel):
     modifiedAt = DateTimeField(default=datetime.datetime.now)
     createdBy = ForeignKeyField(Number, index=True)
     modifiedBy = ForeignKeyField(Number, index=True)
-    confirmed = IntegerField(default=1)
+    confirmed = IntegerField(default=3)
+    status = CharField(default='confirmed')
     
     def __unicode__(self):
         return '%s : %s : %s' % (self.listName, self.number, self.isActive)
