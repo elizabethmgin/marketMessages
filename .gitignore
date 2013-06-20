@@ -3,6 +3,7 @@
 .db
 .sql
 .sqlite
+USATest.db
 
 # OS generated files #
 ######################
