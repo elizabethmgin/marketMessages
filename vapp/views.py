@@ -803,6 +803,7 @@ def hello():
 @app.route('/login', methods = ['GET', 'POST'])
 def login():
     print >> sys.stderr, "within login"
+    print >> sys.stderr, request.args.get('messages')
     print >> sys.stderr, request.args.get('auth')
     if request.method == 'POST':
         print >> sys.stderr, "within POST"
