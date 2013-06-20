@@ -364,34 +364,38 @@ def form_Identity(numberObject):
 # returns String statement
 def promote_SMS(newSMS, sellersListName):
     print >> sys.stderr, "inside promote_SMS"
-    identity = form_Identity(newSMS.number) # creates identity based on whether the sender is a registered seller or not
-    print >> sys.stderr, "inside promote_SMS, after form_Identity"
-    print >> sys.stderr, sellersListName
-    sellersListNumbers = get_Mini_Sellers_ListNumbers(sellersListName) # gets all the numbers on a mini list, but this does not include the owner/creator's number!!
-    print >> sys.stderr, sellersListNumbers
-    print >> sys.stderr, newSMS.body
-    if not newSMS.body:
-        message = identity + ' agamba: Omuntu omulala asobola okunnymbako okuweereza obubaka?' 
-        # Can someone please help me send a message?
-    else: 
-        message = identity + ' agamba: ' + newSMS.body
-    sendersNumber = newSMS.number
-    print >> sys.stderr, sendersNumber
-    sellersListNumbers = remove_Senders_Number(sellersListName, sellersListNumbers, sendersNumber) # remove the senders number from the mini list
-    # print >> sys.stderr, sellersListNumbers
-    for number in sellersListNumbers:
-        if number.isActive == True:
-            statement = str(message) + " sent to " + str(number)
-            create_Outbox_Message(number, message)
-            # print >> sys.stderr, statement
-        else:
-            statement = "This seller is inactive and will not receive the message."
-            print >> sys.stderr, statement
-    statement = "Webale kusindika obubaka ku lukalala lwa ba " + str(sellersListName) 
-    # Thank you for sending your message to the list of [blank]
-    create_Outbox_Message(sendersNumber, statement)
-    # print >> sys.stderr, statement
-    statement = 'this sms was promoted to the ' + sellersListName + ' list'
+    if newSMS.number.isActive == True:
+        identity = form_Identity(newSMS.number) # creates identity based on whether the sender is a registered seller or not
+        print >> sys.stderr, "inside promote_SMS, after form_Identity"
+        print >> sys.stderr, sellersListName
+        sellersListNumbers = get_Mini_Sellers_ListNumbers(sellersListName) # gets all the numbers on a mini list, but this does not include the owner/creator's number!!
+        print >> sys.stderr, sellersListNumbers
+        print >> sys.stderr, newSMS.body
+        if not newSMS.body:
+            message = identity + ' agamba: Omuntu omulala asobola okunnymbako okuweereza obubaka?' 
+            # Can someone please help me send a message?
+        else: 
+            message = identity + ' agamba: ' + newSMS.body
+        sendersNumber = newSMS.number
+        print >> sys.stderr, sendersNumber
+        sellersListNumbers = remove_Senders_Number(sellersListName, sellersListNumbers, sendersNumber) # remove the senders number from the mini list
+        # print >> sys.stderr, sellersListNumbers
+        for number in sellersListNumbers:
+            if number.isActive == True:
+                statement = str(message) + " sent to " + str(number)
+                create_Outbox_Message(number, message)
+                # print >> sys.stderr, statement
+            else:
+                statement = "This seller is inactive and will not receive the message."
+                print >> sys.stderr, statement
+        statement = "Webale kusindika obubaka ku lukalala lwa ba " + str(sellersListName) 
+        # Thank you for sending your message to the list of [blank]
+        create_Outbox_Message(sendersNumber, statement)
+        # print >> sys.stderr, statement
+        statement = 'this sms was promoted to the ' + sellersListName + ' list'
+    else:
+        statement = "Your message was not sent because your number is not active. If you would like to re-activate your number, reply with 'okuyunga'"
+        create_Outbox_Message(sendersNumber, statement)
     return statement
 
 # pass sellersListName, sellersListNumbers, and sendersNumber
@@ -520,6 +524,8 @@ def modify_Seller(newSMS, bodyList):
         update_query = Seller.update(givenName = givenName).where(Seller.id == seller.id)
         update_query.execute()
         update_query = Seller.update(familyName = familyName).where(Seller.id == seller.id)
+        update_query.execute()
+        update_query = Seller.update(modifiedAt = datetime.datetime.now()).where(Seller.id == seller.id)
         update_query.execute()
         statement = 'Information updated: ' + str(givenName) + ' ' + str(familyName)
         create_Outbox_Message(newSMS.number, statement)
@@ -874,7 +880,6 @@ def index(password):
         return statement
 
 @app.route('/sms_received', methods=['POST', 'GET'])
-@login_required
 def sms_received():
     # if request.method == 'POST':
     print >> sys.stderr, "Received POST request to /sms_received/"
@@ -925,9 +930,9 @@ def sms_to_send():
                 if message.sent == False:
                     mlist = [message.number.number, message.body]
                     messageList.append(mlist)
-                    update_query = Outbox.update(sent=True)
+                    update_query = Outbox.update(sent=True).where(Outbox.id == message.id)
                     update_query.execute()
-                    update_query = Outbox.update(modifiedAt=datetime.datetime.now())
+                    update_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.id == message.id)
                     update_query.execute()
                 else:
                     print >> sys.stderr, 'message has already been sent'

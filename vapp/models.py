@@ -15,6 +15,8 @@ class User(BaseModel):
     password = CharField()
     email = CharField(null=True)
     role = IntegerField(default=ROLE_USER)
+    createdAt = DateTimeField(default=datetime.datetime.now)
+    modifiedAt = DateTimeField(default=datetime.datetime.now)
 
     def is_authenticated(self):
         return True
@@ -76,6 +78,8 @@ class Number(BaseModel):
     seller = ForeignKeyField(Seller, related_name="sellerNumbers", null=True, index=True)
     market = ForeignKeyField(Market, related_name="marketNumbers", null=True, index=True)
     user = ForeignKeyField(User, related_name="userNumbers", null=True, index=True)
+    createdAt = DateTimeField(default=datetime.datetime.now)
+    modifiedAt = DateTimeField(default=datetime.datetime.now)
 
     def __unicode__(self):
         return '%s : %s' % (self.createdAt, self.number)
@@ -85,9 +89,10 @@ class Number(BaseModel):
 class SMS(BaseModel):
     sms_id = IntegerField()
     body = CharField()
-    createdAt = DateTimeField(default=datetime.datetime.now)
-    date = IntegerField()
+    date = DateTimeField()
     number = ForeignKeyField(Number, related_name='messages', index=True)
+    createdAt = DateTimeField(default=datetime.datetime.now)
+    modifiedAt = DateTimeField(default=datetime.datetime.now)
     #{u'read' : u'0', u'body' : u'Hi', u'_id': u'2551', u'date': u'1368211515895', u'address': u'+16266767023'}
 
     def __unicode__(self):
@@ -97,10 +102,10 @@ class SMS(BaseModel):
             
 class List(BaseModel):
     name = CharField(null=True, index=True)
-    createdAt = DateTimeField(default=datetime.datetime.now)
-    modifiedAt = DateTimeField(default=datetime.datetime.now)
     seller = ForeignKeyField(Seller, null=True, index=True)
     market = ForeignKeyField(Market, null=True, index=True)
+    createdAt = DateTimeField(default=datetime.datetime.now)
+    modifiedAt = DateTimeField(default=datetime.datetime.now)
 
     def __unicode__(self):
         return '%s' % (self.name)
@@ -111,12 +116,12 @@ class ListRelationship(BaseModel):
     listName = ForeignKeyField(List, index=True)
     number = ForeignKeyField(Number, index=True)
     isActive = BooleanField(default=True)
-    createdAt = DateTimeField(default=datetime.datetime.now)
-    modifiedAt = DateTimeField(default=datetime.datetime.now)
-    createdBy = ForeignKeyField(Number, index=True)
-    modifiedBy = ForeignKeyField(Number, index=True)
     confirmed = IntegerField(default=3)
     status = CharField(default='confirmed')
+    createdBy = ForeignKeyField(Number, index=True)
+    modifiedBy = ForeignKeyField(Number, index=True)
+    createdAt = DateTimeField(default=datetime.datetime.now)
+    modifiedAt = DateTimeField(default=datetime.datetime.now)
     
     def __unicode__(self):
         return '%s : %s : %s' % (self.listName, self.number, self.isActive)
@@ -126,9 +131,9 @@ class ListRelationship(BaseModel):
 class Outbox(BaseModel):
     number = ForeignKeyField(Number)
     body = CharField()
+    sent = BooleanField(default=False)
     createdAt = DateTimeField(default=datetime.datetime.now)
     modifiedAt = DateTimeField(default=datetime.datetime.now)
-    sent = BooleanField(default=False)
     
     def __unicode__(self):
         return '%s // %s // %s // %s' % (self.sent, self.createdAt, self.number, self.body)
