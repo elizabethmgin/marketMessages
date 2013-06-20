@@ -872,7 +872,7 @@ def index(password):
         statement = 'An exception has Occured'+ str(sys.exc_type) + '[' + str(sys.exc_value) + ']'
         return statement
 
-@app.route('/sms_received/', methods=['POST', 'GET'])
+@app.route('/sms_received', methods=['POST', 'GET'])
 @login_required
 def sms_received():
     # if request.method == 'POST':
