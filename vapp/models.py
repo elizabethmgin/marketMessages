@@ -1,6 +1,7 @@
 from vapp import app
 from vapp import database
 from peewee import *
+from config import ROLE_USER, ROLE_ADMIN
 import datetime
 
 class BaseModel(Model):

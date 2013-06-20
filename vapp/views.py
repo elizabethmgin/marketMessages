@@ -1,8 +1,8 @@
 from flask import render_template, flash, redirect
 from vapp import app
 from peewee import *
-from models import Market, Seller, Number, SMS, List, ListRelationship, Outbox
-from config import PASSWORD, PAYLOAD, MARKETLISTS, KEYWORDS, SPAM
+from models import Market, Seller, Number, SMS, List, ListRelationship, Outbox, User
+from config import SECRET_KEY, SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, PAYLOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
 import requests
 from flask import request
 import sys, datetime, json, pprint, ast
@@ -37,10 +37,9 @@ def create_Message_Dict(messages):
     messageDict = {}
     messageString = str(messages)
     messageDict["messages"] = messageString
-    messageDict["auth"] = str(PAYLOAD)
+    messageDict["auth"] = str(payload)
     # print messageDict
     return messageDict
-
 
 # create list of ALL numbers from database
 def create_Number_List():
@@ -131,7 +130,7 @@ def create_Market(name, nickname, neighborhood, city, number):
 # return Seller object or String
 def store_Seller(newSMS):
     print >> sys.stderr, "within store seller"
-    if check_Seller_Exists(newSMS):
+    if check_Seller_Exists(newSMS.number):
         print >> sys.stderr, "within store seller if"
         statement = "Okimanyi nti e nnamba eno wagiwaandiisa dda ku lukalala?"
         # Do you know you've already registered this number for the mailing list?
@@ -140,9 +139,9 @@ def store_Seller(newSMS):
         try:
             print >> sys.stderr, "within store seller else try"
             bodyList = split_Body(newSMS)
-            if len(bodyList) > 4:
+            if len(bodyList) > 2:
                 print >> sys.stderr, "within store seller else if"
-                newSeller = Seller(givenName = bodyList[1], familyName = bodyList[2], product = bodyList[3], kind = bodyList[4], market = 1)
+                newSeller = Seller(givenName = bodyList[1], familyName = bodyList[2], product = bodyList[3], market = 1)
                 newSeller.save()
                 update_query = Number.update(seller=newSeller).where(Number.number == newSMS.number.number)
                 update_query.execute()
@@ -162,15 +161,16 @@ def store_Seller(newSMS):
             return statement
     return statement
 
-# pass SMS object
+# pass Number Object
 # check if Number exists AND Number is associated with foreign key Seller
 # return True if Number is already associated with a Seller
-def check_Seller_Exists(newSMS):
+def check_Seller_Exists(numberObject):
+    print >> sys.stderr, "within check_Seller_Exists"
     for number in Number.select():
-        if number == newSMS.number and number.seller:
+        if number == numberObject and number.seller:
             print 'a seller is already associated with the number of this incoming sms!'
             return True
-            
+
 # pass listName
 # check if List exists
 # return True if List already exists
@@ -180,14 +180,14 @@ def check_List_Exists(listName):
             print 'this list exists!'
             return True
 
-# get an already registered Seller based on a stored SMS message 
+# get an already registered Seller based on a stored Number Object 
 # return Seller object           
-def get_Seller(newSMS):
-    smsNumber = newSMS.number.number
+def get_Seller(numberObject):
+    smsNumber = numberObject.number
     sellerNumber = Number.get(Number.number == smsNumber)
     seller = sellerNumber.seller
     return seller
-    
+
 # creates a list out of the SMS body
 # returns list in unicode
 def split_Body(newSMS):
@@ -207,7 +207,7 @@ def create_Outbox_Message(number, body): # parameters I could add to function, m
 # create a new mini List from information contained in stored SMS, or add numbers to a pre-existing mini List
 # return confirmation statement
 def create_Mini_Seller_List(newSMS):
-    seller = get_Seller(newSMS)
+    seller = get_Seller(newSMS.number)
     bodyList = split_Body(newSMS)
     bodyList.pop(0) # remove create keyword
     name = bodyList[0]
@@ -223,14 +223,16 @@ def create_Mini_Seller_List(newSMS):
     else:
         newList = List(name = name, seller = seller)
         newList.save()
-        message = 'Otandisewo olukalala olupya ayitibwa ' + str(name)
+        newListRelationship = create_ListRelationship(newList, newSMS.number, newSMS.number, newSMS.number)
+        newListRelationship.save()
+        message = 'Otandisewo olukalala olupya oluyitibwa ' + str(name)
         print message # You created a new list called
         create_Outbox_Message(newSMS.number, message)
     createdBy = newSMS.number
     statement = add_Numbers(newList, numberList, createdBy)
     return statement
 
-# pass List object and list of numbers
+# pass List Object, list of numbers, and Number Object
 # return statement
 def add_Numbers(listObject, numberList, createdBy):
     listOwner = listObject.seller
@@ -250,12 +252,15 @@ def add_Numbers(listObject, numberList, createdBy):
             else:
                 newListRelationship = create_ListRelationship(listObject, numberObject, createdBy, createdBy)
                 print newListRelationship
-                statement = str(numberObject.number) + ' was added to your list!'
+                identity = form_Identity(createdBy)
+                statement = str(numberObject.number) + ' was added to your list by ' + str(identity)
                 create_Outbox_Message(ownerNumberObject, statement)
-                memberStatement = "You've been added to the following list: " + str(listObject.name) + ". To reply, start your message with '" + str(listObject.name) + "'. To reply all, start your message with '" + str(listObject.name) + " all'"
+                memberStatement = str(identity) + " added you to the following list: " + str(listObject.name) + ". To set your identity, start your message with ME. (i.e. ME familyName givenName)"
                 create_Outbox_Message(numberObject, memberStatement)
+                # moreStatement = "Okuddamu tandika obubaka bwo nekigambo '" + str(listObject.name) + " owner'. Okuddamu eri bonna, tandika obubaka bwo n'ekigambo '" + str(listObject.name) + "'"
+                # create_Outbox_Message(numberObject, moreStatement)
     return statement
-    
+
 # pass Seller object and List name
 # check to see if List exists with that name and associated Seller
 # return True
@@ -264,27 +269,29 @@ def check_Mini_Sellers_ListName_Exists(seller, name):
         if l.seller == seller and l.name == name:
             print 'seller already created this list!'
             return True
-        
+
 # pass Seller object and List name
 # return List Object with that name and associated with that Seller
 def get_Mini_Sellers_List(seller, name):
     l = List.get(List.name == name and List.seller == seller)
     return l
-    
+
 # pass List name
 # return List Object with that name
 def get_Mini_List(name):
+    print >> sys.stderr, "get_Mini_List"
     l = List.get(List.name == name)
     return l
-    
-# pass Seller Object and List name
+
+# pass List name
 # return Seller object (owner of that List)
-def get_Mini_List_Owner(name):
-    l = get_Mini_List(name)
+def get_Mini_List_Owner(listName):
+    print >> sys.stderr, "within get_Mini_List_Owner"
+    l = get_Mini_List(listName)
     listOwner = l.seller
     return listOwner
 
-    
+
 # pass Seller
 # return list of names of mini Lists that Seller has created
 def get_Mini_Sellers_ListNames(seller):
@@ -292,10 +299,11 @@ def get_Mini_Sellers_ListNames(seller):
     for l in List.select().where(List.seller == seller):
         sellersListNames.append(l.name)
     return sellersListNames
-    
+
 # pass Number Object
 # return list of names of mini Lists that Number has List Relationship with
 def get_Mini_ListNames(number):
+    print >> sys.stderr, "inside get_Mini_ListNames"
     listNames = []
     for l in ListRelationship.select().where(ListRelationship.number == number):
         listNames.append(l.listName.name)
@@ -318,7 +326,7 @@ def check_ListRelationship_Exists(listObject, numberObject):
         if lr.listName == listObject and lr.number == numberObject:
             print 'this list relationship already exists and was created by ' + str(lr.createdBy)
             return True
-            
+
 # pass List Object and Number Object to which create the List Relationship, but also the Number Object that is responsible for the SMS sent to create the List Relationship
 # check to see if List Relationship exists
 # If so, return statement
@@ -332,41 +340,41 @@ def create_ListRelationship(listObject, numberObject, createdBy, modifiedBy):
         statement = newListRelationship
     return statement
 
-# pass SMS object
-# create different SMS to promote depending on whether the SMS is associated with a registered seller
+# pass Number Object
+# create different SMS to promote depending on whether the Number is associated with a registered seller
 # return identity of message sender
-def form_SMS_To_Promote(newSMS):
-    if check_Seller_Exists(newSMS):
-        seller = get_Seller(newSMS)
+def form_Identity(numberObject):
+    print >> sys.stderr, "inside form_Identity()"
+    if check_Seller_Exists(numberObject):
+        seller = get_Seller(numberObject)
         givenName = seller.givenName.title()
         familyName = seller.familyName.title()
-        market = seller.market.name.title()
-        identity = givenName + ' ' + familyName + ' okuva ' + market + ' agamba: '
+        # market = seller.market.name.title()
+        # identity = givenName + ' ' + familyName + ' okuva ' + market + ' agamba: '
+        identity = givenName + ' ' + familyName
         # Kevin Gin from Bugolobi Market says:
+        return identity
     else:
-        identity = str(newSMS.number) + ' agamba: '
+        identity = str(numberObject.number)
         # 14845575821 says:
-    return identity
-        
+        return identity
+
 # pass SMS object and the intended Seller's mini or default market List
 # function only promotes the SMS object to active Numbers
 # returns String statement
-def promote_SMS(newSMS, sellersListName, fromOwner):
-    identity = form_SMS_To_Promote(newSMS) # creates identity based on whether the sender is a registered seller or not
+def promote_SMS(newSMS, sellersListName):
+    print >> sys.stderr, "inside promote_SMS"
+    identity = form_Identity(newSMS.number) # creates identity based on whether the sender is a registered seller or not
+    print >> sys.stderr, "inside promote_SMS, after form_Identity"
+    print >> sys.stderr, sellersListName
     sellersListNumbers = get_Mini_Sellers_ListNumbers(sellersListName) # gets all the numbers on a mini list, but this does not include the owner/creator's number!!
-    # print >> sys.stderr, sellersListNumbers
-    if fromOwner == False: # if the message is not from the owner/creator of the mini list, then add the owner's number to the mini list's list of numbers
-        sellersListNumbers = add_Owners_Number(sellersListName, sellersListNumbers)
-        # print >> sys.stderr, sellersListNumbers
-    else:
-        sellersListNumbers = sellersListNumbers
+    print >> sys.stderr, sellersListNumbers
+    print >> sys.stderr, newSMS.body
     if not newSMS.body:
-        message = identity + 'Omuntu omulala asobola okunnymbako okuweereza obubaka?' 
+        message = identity + ' agamba: Omuntu omulala asobola okunnymbako okuweereza obubaka?' 
         # Can someone please help me send a message?
-        # print >> sys.stderr, 'this message is empty!'
     else: 
-        message = identity + newSMS.body
-        # print >> sys.stderr, 'this message is full!'
+        message = identity + ' agamba: ' + newSMS.body
     sendersNumber = newSMS.number
     print >> sys.stderr, sendersNumber
     sellersListNumbers = remove_Senders_Number(sellersListName, sellersListNumbers, sendersNumber) # remove the senders number from the mini list
@@ -395,7 +403,7 @@ def remove_Senders_Number(sellersListName, sellersListNumbers, sendersNumber):
         return sellersListNumbers
     else:
         return sellersListNumbers
-        
+
 # pass sellersListName, sellersListNumbers, and sendersNumber
 # returned edited sellersListNumbers with owners Number added
 def add_Owners_Number(sellersListName, sellersListNumbers):
@@ -416,13 +424,17 @@ def notify_Members(newSeller, sellersListName='bugolobi market'):
     givenName = newSeller.givenName.title()
     familyName = newSeller.familyName.title()
     market = newSeller.market.name.title()
-    product = newSeller.product.title()
-    message = 'Munnakibiina Oomupya yaakeewandiisa! ' + givenName + ' ' + familyName + ' ebitundibwa ' + product + ' mu ' + market 
-    # A new member just registered! Kevin Gin sells philsophy in Bugolobi Market.
+    if newSeller.product:
+        product = newSeller.product.title()
+        message = 'Munnakibiina Oomupya yaakeewandiisa! ' + givenName + ' ' + familyName + ' ebitundibwa ' + product + ' mu ' + market
+        # A new member just registered! Kevin Gin sells philsophy in Bugolobi Market. 
+    else:
+        message = 'Munnakibiina Oomupya yaakeewandiisa! ' + givenName + ' ' + familyName + ' is a customer of ' + market 
+        # A new member just registered! Kevin Gin is a customer of Bugolobi Market.
     sellersListNumbers = get_Mini_Sellers_ListNumbers(sellersListName)
     for number in sellersListNumbers:
         print >> sys.stderr, "within notify members for"
-        # print >> sys.stderr, number
+        print >> sys.stderr, number
         if number.seller:
             print >> sys.stderr, "within notify if"
             if number.seller != newSeller and number.isActive == True:
@@ -446,20 +458,6 @@ def notify_Members(newSeller, sellersListName='bugolobi market'):
             print >> sys.stderr, statement
     statement = 'members were notified of a new seller!'
     return statement
-    
-# change Sellers isActive status to False
-def deactivate_Seller(newSMS):
-    smsNumber = newSMS.number.number
-    sellerNumber = Number.get(Number.number == smsNumber)
-    seller = sellerNumber.seller
-    update_query = Number.update(isActive = False).where(Number.seller == seller)
-    update_query.execute()
-    update_query = Number.update(modifiedAt = datetime.datetime.now()).where(Number.seller == seller)
-    update_query.execute()
-    statement = str(seller) + ': baakusazeeko tojja kwongera kufuna bubaka.'
-    # You have been deactivated and will no longer receive messages
-    create_Outbox_Message(newSMS.number, statement)
-    return statement
 
 # pass newSMS object    
 # change Numbers isActive status to False
@@ -474,7 +472,7 @@ def deactivate_Number(newSMS):
     # You have been deactivated and will no longer receive messages If you would like to re-activate your membership, please send okuyunga to 0784820672
     create_Outbox_Message(numberObject, statement)
     return statement
-    
+
 # pass newSMS object    
 # change Numbers isActive status to True
 def reactivate_Number(newSMS):
@@ -499,14 +497,49 @@ def deactivate_ListRelationship(numberObject, listName):
     statement = str(number) + ' has been removed from ' + str(listName) + ' and will no longer receive messages.'
     create_Outbox_Message(numberObject, statement)
     return statement
-    
+
 # for all incoming SMS messages
 def incoming_SMS(message):
     print >> sys.stderr, "within incoming_SMS"
     newSMS = store_SMS(message) # stores incoming SMS
     print >> sys.stderr, "within incoming_SMS, after store_SMS"
-    statement = check_SMS(newSMS) # checks SMS for keywords, and then promotes, saves new Seller objects, notifies existing members, creates mini-lists, etc. accordingly
+    statement = check_SMS(newSMS)
     return statement
+
+def modify_Seller(newSMS, bodyList):
+    print >> sys.stderr, "inside modify_Seller"
+    if (check_Seller_Exists(newSMS.number)) and bodyList[0] == 'me':
+        print >> sys.stderr, "within modify_Seller, seller exists + me"
+        seller = get_Seller(newSMS.number)
+        if len(bodyList) == 3:
+            givenName = bodyList[1]
+            familyName = bodyList[2]
+        else:
+            givenName = bodyList[1]
+            familyName = ''
+        update_query = Seller.update(givenName = givenName).where(Seller.id == seller.id)
+        update_query.execute()
+        update_query = Seller.update(familyName = familyName).where(Seller.id == seller.id)
+        update_query.execute()
+        statement = 'Information updated: ' + str(givenName) + ' ' + str(familyName)
+        create_Outbox_Message(newSMS.number, statement)
+        return statement
+    else:
+        print >> sys.stderr, "within incoming_SMS, seller does not exist, create!"
+        if len(bodyList) == 3:
+            givenName = bodyList[1]
+            familyName = bodyList[2]
+        else:
+            givenName = bodyList[1]
+            familyName = ''
+        newSeller = Seller(givenName = givenName, familyName = familyName)
+        newSeller.save()
+        update_query = Number.update(seller=newSeller).where(Number.number == newSMS.number.number)
+        update_query.execute()
+        statement = 'Information updated: ' + str(givenName) + ' ' + str(familyName)
+        create_Outbox_Message(newSMS.number, statement)
+        return statement
+
 
 # pass two Number objects
 # return success statement
@@ -517,13 +550,12 @@ def create_Seller_Number_Association(oldNumber, newNumber):
     newNumber = Number.get(Number.number == newNumber.number)
     statement = str(oldNumber.number) + ' : ' + str(oldNumber.seller) + ' // ' + str(newNumber.number) + ' : ' + str(newNumber.seller)
     return statement
-    
+
 # pass newSMS
 # return statement 
-def check_Keywords(newSMS, miniSellersListNames):
-    print >> sys.stderr, "inside check_KEYWORDS"
-    bodyList = split_Body(newSMS)
-    seller = get_Seller(newSMS)
+def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
+    print >> sys.stderr, "inside check_Seller_Keywords"
+    listNames.remove('bugolobi market')
     if (bodyList[0] == 'okuyiya') or (bodyList[0] == 'create'): # create 
         statement = create_Mini_Seller_List(newSMS)
     elif (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'): # join
@@ -532,9 +564,6 @@ def check_Keywords(newSMS, miniSellersListNames):
         else:
             statement = "Okimanyi nti e nnamba eno wagiwaandiisa dda ku lukalala?" # do you know you've already registered?
             create_Outbox_Message(newSMS.number, statement)
-    elif (bodyList[0] == 'help') or (bodyList[0] == 'obuyambi'):
-        message = 'Okuyiya: tandikawo olukalala olulwo \n Okugata: gattako olukalala olulwo \n Kuvawo: leekawo lukalala lwonna'
-        create_Outbox_Message(newSMS.number, message)
     elif bodyList[0].isdigit(): # new number / seller association sent from seller's associated number
         number = bodyList[0]
         number = validate_Number(number)
@@ -549,6 +578,7 @@ def check_Keywords(newSMS, miniSellersListNames):
         print >> sys.stderr, "inside elif kuvawo"
         statement = deactivate_Number(newSMS) # leave all lists
     elif (bodyList[0] == 'okugata') or (bodyList[0] == 'add'):
+        miniSellersListNames = get_Mini_Sellers_ListNames(seller)
         if (bodyList[1] in miniSellersListNames):
             listName = str(bodyList[1])
             bodyList.pop(0) # remove add keyword
@@ -558,84 +588,160 @@ def check_Keywords(newSMS, miniSellersListNames):
             createdBy = newSMS.number
             statement = add_Numbers(l, numberList, createdBy)
         else:
-            message = "Sorry, you don't have a list called " + str(bodyList[1]) + ". To create a list, send a message using the following format: Okuyiya listname number number number"
-            create_Outbox_Message(newSMS.number, message)
+            statement = "Twetonda, tolina lukalala luyitibwa " + str(bodyList[1]) + ". Okutandikawo olukalala, sindika obubaka ng'ogoberera emitendera gino: Tandikawo, erinnya lyo ozzeeko e namba oe  z'oyagala okuyunga ko."
+            create_Outbox_Message(newSMS.number, statement)
+    elif (bodyList[0] == 'me'):
+        print >> sys.stderr, 'within check_Seller_Keywords me'
+        statement = modify_Seller(newSMS, bodyList)
     else:
-        message = "Sorry, we didn't understand your message. Okuyiya: tandikawo olukalala olulwo \n Okugata: gattako olukalala olulwo \n Kuvawo: leekawo lukalala lwonna"
+        statement = "Twetonda obubaka bwo tetubutegedde. Okuyiya: tandiikawo olukalala lwo mu bufunze \n Okugata: gattako olukalala olulwo \n Kuvawo: leekawo lukalala lwonna"
         # Sorry, we didn't understand your message. Okuyiya: create your own list \n Okugata: add a number to your list \n Kuvawo: leave all mailing lists
-        create_Outbox_Message(newSMS.number, message)
+        create_Outbox_Message(newSMS.number, statement)
     return statement
+
+def check_Keywords(newSMS, bodyList, seller):
+    if (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'):
+        print >> sys.stderr, "seller not yet associated with a market"
+        statement = create_Seller_Market_Association(newSMS, bodyList, seller)
+    else:
+        statement = "Sorry, we didn't understand your message. Yogerako ne Maama Zaina."
+        create_Outbox_Message(newSMS.number, statement)
+    return statement
+
+def help_Function(newSMS, bodyList):
+    if (bodyList[0] == 'help') or (bodyList[0] == 'obuyambi'):
+        statement = "Olukalala lw'omu katale k'e Bugolobi lukosobozesa okusindikira abantu obubaka. Reply with one of these keywords: okuyunga, okuyiya, okugata" #explanation of how to join
+        # The Bugolobi Market Mailing List allows you to send messages to over 40 members, but you only need to pay for one message! Instructions on how to join, etc.
+        create_Outbox_Message(newSMS.number, statement)
+    elif (bodyList[0] == 'okuyiya') or (bodyList[0] == 'create'):
+        statement = "If you are already a member, you can create your own private list: 'okuyiya listname number number number'"
+        create_Outbox_Message(newSMS.number, statement)
+    elif (bodyList[0] == 'okugata') or (bodyList[0] == 'add'):
+        statement = "If you are a member of a private list, you can add other participants to that list: 'listname okugata number'"
+        create_Outbox_Message(newSMS.number, statement)
+    elif (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'):
+        if newSMS.number.isActive == False:
+            statement = reactivate_Number(newSMS)
+        elif newSMS.number.seller and not newSMS.number.seller.market:
+            statement = "Reply with 'Okuyunga marketName' to join a specific market list"
+            create_Outbox_Message(newSMS.number, statement)
+        else:
+            statement = "Okutwegattako Goberera enkola eno 'okuyunga Erinnya Eppaatiike Erinnya Ery'ekika Byotunda'"
+            create_Outbox_Message(newSMS.number, statement)
+    elif (bodyList[0] == 'me'):
+        statement = "Reply with 'me givenName familyName' to update your personal information."
+        create_Outbox_Message(newSMS.number, statement)
+    elif (bodyList[0] == 'who'):
+        statement = "Reply with 'listname who' to see who is on a private list."
+        create_Outbox_Message(newSMS.number, statement)
+    else:
+        statement = "Walyagadde okwegatta ku lukalala lwa kataale ke'Bugolobi? Yogerako ne Maama Zaina."
+        # Would you like to join the Bugolobi Market Mailing List? Please talk to Maama Zaina.
+        create_Outbox_Message(newSMS.number, statement)
+    return statement
+
+def query_ListRelationship(listname):
+    print >> sys.stderr, "inside query_ListRelationship"
+    l = get_Mini_List(listname)
+    whoList = []
+    whoStr = ''
+    whoStr2 = ''
+    for lr in ListRelationship.select():
+        if lr.listName == l:
+            if lr.number.seller:
+                who = str(lr.number.seller.givenName) + " " + str(lr.number.seller.familyName)
+                whoStr = whoStr + who + ', '
+            else:
+                who = str(lr.number.number)
+                whoStr2 = whoStr2 + who + ', '
+        else:
+            print "list relationship doesn't match"
+    whoWhole = whoStr + whoStr2
+    return whoWhole
+
+def create_Seller_Market_Association(newSMS, bodyList, seller):
+    marketNickname = str(bodyList[1])
+    marketList = create_Market_List()
+    if marketNickname in marketList:
+        marketObject = Market.get(Market.nickname == marketNickname)
+        update_query = Seller.update(market = marketObject).where(Seller.id == seller.id)
+        update_query.execute()
+        listObject = List.get(List.id == marketObject.id)
+        statement = create_ListRelationship(listObject, newSMS.number, newSMS.number, newSMS.number)
+        message = 'You are now associated with ' + str(marketObject.name)
+        create_Outbox_Message(newSMS.number, message)
+        seller = get_Seller(newSMS.number)
+        notify_Members(seller, marketObject.name)
+    else:
+        message = 'Sorry! ' + str(marketNickname) + " doesn't have a mailing list yet. Yogerako ne Maama Zaina."
+        create_Outbox_Message(newSMS.number, message)
+    return message
+
+def create_Market_List():
+    print >> sys.stderr, "inside create_Market_List"
+    marketList = []
+    for market in Market.select():
+        marketList.append(market.nickname)
+    return marketList
+
+
 
 # first check to determine user goals
 def check_SMS(newSMS):
     print >> sys.stderr, "inside check_SMS"
     bodyList = split_Body(newSMS)
-    listNames = get_Mini_ListNames(newSMS.number)
-    # print >> sys.stderr, listNames
+    listNames = get_Mini_ListNames(newSMS.number) # pass Number object, get list of names of mini Lists that Number has List Relationship with
+    print >> sys.stderr, listNames
     if (bodyList[0] in listNames): # sender is any member of mini list EXCEPT the creator/owner of the mini list
-        print >> sys.stderr, "inside bodyList listNames"
+        print >> sys.stderr, "inside bodyList in listNames"
         listName = str(bodyList[0])
-        # print >> sys.stderr, listName
-        bodyList.pop(0)
-        if (bodyList[0] == 'all'): # message meant to go to everyone on the list
-            print >> sys.stderr, 'within all'
-            bodyList.pop(0)
-            body = ' '.join(str(n) for n in bodyList)
-            # print >> sys.stderr, body
-            newSMS.body = body
-            statement = promote_SMS(newSMS, listName, False)
-            return statement
-        elif (bodyList[0] == 'okugata') or (bodyList[0] == 'add'): # member of list trying to add new member to list
+        print >> sys.stderr, listName
+        bodyList.pop(0) # remove list name
+        if (bodyList[0] == 'okugata') or (bodyList[0] == 'add'): # member of list trying to add new member to list
             print >> sys.stderr, 'within check_SMS add'
-            bodyList.pop(0)
+            bodyList.pop(0) # remove keyword so that it is just a list of numbers
             numberList = bodyList # list name and keyword removed so that it is just a list of numbers
             l = get_Mini_List(listName)
             createdBy = newSMS.number
             statement = add_Numbers(l, numberList, createdBy)
-        else: # message meant to only go to the creator/owner of the list
-            print >> sys.stderr, 'meant only to send to owner of list'
+            return statement
+        elif (bodyList[0] == 'who'):
+            print >> sys.stderr, 'within check_SMS who'
+            whoStr = query_ListRelationship(listName)
+            create_Outbox_Message(newSMS.number, str(whoStr))
+            return whoStr
+        elif (bodyList[0] == 'owner'):
+            print >> sys.stderr, 'meant only to go to creator of mini list'
             body = ' '.join(str(n) for n in bodyList)
-            identity = form_SMS_To_Promote(newSMS)
-            message = identity + body
+            identity = form_Identity(newSMS.number)
+            message = identity + ' agamba: ' + body
             listOwner = get_Mini_List_Owner(listName)
             ownerNumberObject = Number.get(Number.seller == listOwner)
             create_Outbox_Message(ownerNumberObject, message)
-            statement = "Your message was delivered only to the creator of the " + str(listName) + " list"
-            # Thank you for sending your message to the list of [blank]
+            statement = "Obubaka bwo bugenze wa nanyinni kutandikawo lukalala luno yekka: " + str(listName)
             create_Outbox_Message(newSMS.number, statement)
             return message
-    elif check_Seller_Exists(newSMS):
-        seller = get_Seller(newSMS)
-        miniSellersListNames = get_Mini_Sellers_ListNames(seller)
-        # print >> sys.stderr, miniSellersListNames
-        if not bodyList: # blank message sent
-            statement = promote_SMS(newSMS, seller.market.name, False)
-        elif bodyList[0] in miniSellersListNames: # message sent by the creator/owner of the mini list and meant to go to all members
-            print >> sys.stderr, 'bodyList[0] in miniSellersListNames'
-            miniSellersListName = str(bodyList[0])
-            bodyList.pop(0)
+        elif (len(bodyList) == 0) or (bodyList[0] =='help') or (bodyList[0] == 'obuyambi'):
+            statement = "That message didn't go to anyone! Either begin your message with '" + listName + "' or '" + listName + " owner' or '" + listName + " who' "
+            create_Outbox_Message(newSMS.number, statement)
+            return statement
+        else:
+            print >> sys.stderr, 'default goes to everyone on the mini list'
             body = ' '.join(str(n) for n in bodyList)
             newSMS.body = body
-            statement = promote_SMS(newSMS, miniSellersListName, True)
-        elif bodyList[0] in KEYWORDS:
-            print >> sys.stderr, "elif bodyList[0] in KEYWORDS"
-            statement = check_Keywords(newSMS, miniSellersListNames)
-        else:
-            print >> sys.stderr, "within check_Seller_Exists general promotion"
-            statement = promote_SMS(newSMS, seller.market.name, False) # general promotion to the seller's market list
-    elif (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'): # new seller trying to join
-        print >> sys.stderr, "entering new okuyunga"
-        newSeller = store_Seller(newSMS)
-        if not type(newSeller) == str:
-            statement = notify_Members(newSeller, newSeller.market.name)
-        else:
-            statement = newSeller
-    elif (bodyList[0] == 'help') or (bodyList[0] == 'obuyambi'):
-        statement = "Olukalala lw'omu katale k'e Bugolobi lukosobozesa okusindikira abantu obubaka. Osasulira obubaka bwa muntu omu bwokka 'okuyunga Erinnya Eppaatiike Erinnya Ery'ekika Byotunda'" #explanation of how to join
-        # The Bugolobi Market Mailing List allows you to send messages to over 40 members, but you only need to pay for one message! Instructions on how to join, etc.
-        create_Outbox_Message(newSMS.number, statement)
+            statement = promote_SMS(newSMS, listName)
+            return statement
+    elif (len(bodyList) == 1) and (bodyList[0] in HELP_KEYWORDS):
+        print >> sys.stderr, "elif bodyList[0] in HELP_KEYWORDS"
+        statement = help_Function(newSMS, bodyList)
+        return statement
+    elif (len(bodyList) > 1) and (bodyList[0] == 'me'):
+        print >> sys.stderr, "inside check_SMS me"
+        statement = modify_Seller(newSMS, bodyList)
+        return statement
     elif (bodyList[0] == 'kuvawo') or (bodyList[0] == 'leave'):
         statement = deactivate_Number(newSMS) # leave all lists
+        return statement
     elif bodyList[0].isdigit(): # new Number/Seller association from message sent by unassociated Number
         number = bodyList[0]
         number = validate_Number(number)
@@ -643,37 +749,67 @@ def check_SMS(newSMS):
             oldNumber = get_Number_Object(number)
             newNumber = newSMS.number
             statement = create_Seller_Number_Association(oldNumber, newNumber)
+            return statement
         else:
             statement = number
+            return statement
+    elif check_Seller_Exists(newSMS.number):
+        print >> sys.stderr, "inside check_SMS check_Seller_Exists"
+        seller = get_Seller(newSMS.number)
+        if seller.market:
+            if bodyList[0] in SELLER_KEYWORDS:
+                print >> sys.stderr, "elif bodyList[0] in KEYWORDS"
+                statement = check_Seller_Keywords(newSMS, bodyList, seller, listNames)
+                return statement
+            else:
+                print >> sys.stderr, "within check_Seller_Exists general promotion"
+                statement = promote_SMS(newSMS, seller.market.name) # general promotion to the seller's market list
+                return statement
+        else:
+            statement = check_Keywords(newSMS, bodyList, seller) 
+            return statement
+    elif (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'): # new seller trying to join
+        print >> sys.stderr, "entering new okuyunga"
+        newSeller = store_Seller(newSMS)
+        if not type(newSeller) == str:
+            statement = notify_Members(newSeller, newSeller.market.name)
+            return statement
+        else:
+            statement = newSeller
+            return statement
     elif newSMS.number.number in SPAM:
         statement = 'MTN keeps spamming the mailing list!'
+        print >> sys.stderr, statement
+        return statement
     else:
-        statement = "Walyagadde okwegatta ku lukalala lwa kataale ke'Bugolobi? Yogerako ne Maama Zaina."
+        statement = "Walyagadde okwegatta ku lukalala lwa kataale ke'Bugolobi or create your own list? Yogerako ne Maama Zaina."
         # Would you like to join the Bugolobi Market Mailing List? Please talk to Maama Zaina.
         create_Outbox_Message(newSMS.number, statement)
-    return statement
-
-
+        return statement
 
 @app.route('/')
 def hello():
     return str(datetime.datetime.now())
-    
+
+@app.route('/login/')
+def login():
+    statement = 'not logged in'
+    return statement
+
 @app.route('/index/<password>')
 def index(password):
     print >> sys.stderr, "within index"
     try:
-        if password == PASSWORD:
+        if password == 'secret':
             print >> sys.stderr, "within try"
             sellerList = Seller.select()
             smsList = SMS.select()
-            numberList = Number.select()
+            #numberList = Number.select()
             l = List.select()
             marketList = Market.select()
-            lrList = ListRelationship.select()
-            outboxList = Outbox.select()
+            #lrList = ListRelationship.select()
+            #outboxList = Outbox.select()
             return render_template("index.html", title = 'TABLES', sellerList = sellerList, smsList = smsList, l = l, marketList = marketList)
-            #return 'hello world'
         else:
             print >> sys.stderr, "wrong password"
     except:
@@ -682,8 +818,7 @@ def index(password):
         print >> sys.stderr, str(sys.exc_info()[1])
         statement = 'An exception has Occured'+ str(sys.exc_type) + '[' + str(sys.exc_value) + ']'
         return statement
-        
-        
+
 @app.route('/sms_received/', methods=['POST', 'GET'])
 def sms_received():
     if request.method == 'POST':
@@ -697,7 +832,7 @@ def sms_received():
             print type(authList)
             authDict = authList[0]
             print authDict
-            payloadDict = PAYLOAD[0]
+            payloadDict = payload[0]
             print payloadDict
             if (authDict['pw'] == payloadDict['pw']) and (authDict['user'] == payloadDict['user']):
                 print >> sys.stderr, "within auth"
@@ -723,7 +858,7 @@ def sms_received():
     else:
         print 'oops!'
         return 'nice try but that was a POST'
-
+        
 @app.route('/sms_to_send/', methods=['POST', 'GET'])
 def sms_to_send():
     if request.method == 'GET':
@@ -735,20 +870,21 @@ def sms_to_send():
                 if message.sent == False:
                     mlist = [message.number.number, message.body]
                     messageList.append(mlist)
-                else:
-                    statement = 'message has already been sent'
-            if messageList:
-                messageDict = create_Message_Dict(messageList) 
-                # print messageDict
-                # print type(messageDict)
-                messageDict = json.dumps(messageDict)
-                for message in Outbox.select():
                     update_query = Outbox.update(sent=True)
                     update_query.execute()
-                return messageDict
+                    update_query = Outbox.update(modifiedAt=datetime.datetime.now())
+                    update_query.execute()
+                else:
+                    print >> sys.stderr, 'message has already been sent'
+            if messageList:
+                messageDict = create_Message_Dict(messageList) 
             else:
-                statement = 'empty message list'
-            return statement
+                mStr = 'no new messages'
+                messageList.append(mStr)
+                messageDict = create_Message_Dict(messageList)
+            print messageDict
+            messageDict = json.dumps(messageDict)
+            return messageDict
         except:
             print >> sys.stderr, "within except"
             print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
