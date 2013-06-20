@@ -1,10 +1,10 @@
 from flask import Flask
 from peewee import *
 import os,sys
-os.chdir('/home/ginontherocks/public_python/bugolobi_GIT/deploy')
+os.chdir('/home/ginontherocks/public_python/marketMessages/deploy')
 
 
-DATABASE = '/home/ginontherocks/public_python/bugolobi_GIT/deploy/vapp/USATest.db'
+DATABASE = '/home/ginontherocks/public_python/marketMessages/deploy/vapp/USATest.db'
 s = os.getcwd()
 print >> sys.stderr, "directory --------->"
 print >> sys.stderr, s
