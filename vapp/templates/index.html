@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<table id="hor-minimalist-b" summary="Number">
+	<caption>Number</caption>
+    <thead>
+    	<tr>
+        	<th scope="col">Number</th>
+            <th scope="col">Active?</th>
+            <th scope="col">Seller</th>
+            <th scope="col">Market</th>
+			<th scope="col">Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+	{% for number in numberList %}
+    	<tr>
+        	<td>{{number.number}}</td>
+            <td>{{number.isActive}}</td>
+            <td>{{number.seller}}</td>
+            <td>{{number.market}}</td>
+			<td>{{number.createdAt}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<table id="hor-minimalist-b" summary="Market">
+	<caption>Market</caption>
+    <thead>
+    	<tr>
+        	<th scope="col">Name</th>
+            <th scope="col">Nickname</th>
+            <th scope="col">Hood</th>
+            <th scope="col">City</th>
+			<th scope="col">Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+	{% for market in marketList %}
+    	<tr>
+        	<td>{{market.name}}</td>
+            <td>{{market.nickname}}</td>
+            <td>{{market.neighborhood}}</td>
+            <td>{{market.city}}</td>
+			<td>{{market.createdAt}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+<table id="hor-minimalist-b" summary="Lists">
+	<caption>Lists</caption>
+    <thead>
+    	<tr>
+        	<th scope="col">Name</th>
+            <th scope="col">Seller</th>
+            <th scope="col">Market</th>
+			<th scope="col">Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+	{% for l in l %}
+    	<tr>
+        	<td>{{l.name}}</td>
+            <td>{{l.seller}}</td>
+            <td>{{l.market}}</td>
+			<td>{{l.createdAt}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<table id="hor-minimalist-b" summary="Seller">
+	<caption>Seller</caption>
+    <thead>
+    	<tr>
+        	<th scope="col">Given Name</th>
+            <th scope="col">Family Name</th>
+            <th scope="col">Kind</th>
+            <th scope="col">Product</th>
+			<th scope="col">Market</th>
+			<th scope="col">Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+	{% for seller in sellerList %}
+    	<tr>
+        	<td>{{seller.givenName}}</td>
+            <td>{{seller.familyName}}</td>
+            <td>{{seller.kind}}</td>
+            <td>{{seller.product}}</td>
+			<td>{{seller.market}}</td>
+			<td>{{seller.createdAt}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<table id="hor-minimalist-b" summary="List Relationships">
+	<caption>List Relationships</caption>
+    <thead>
+    	<tr>
+        	<th scope="col">List Name</th>
+            <th scope="col">Number</th>
+        </tr>
+    </thead>
+    <tbody>
+	{% for lr in lrList %}
+    	<tr>
+        	<td>{{lr.listName}}</td>
+            <td>{{lr.number}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<table id="hor-minimalist-b" summary="SMS">
+	<caption>SMS</caption>
+    <thead>
+    	<tr>
+        	<th scope="col">SMS ID</th>
+            <th scope="col">Body</th>
+            <th scope="col">Number</th>
+            <th scope="col">Date</th>
+			<th scope="col">Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+	{% for sms in smsList %}
+    	<tr>
+        	<td>{{sms.sms_id}}</td>
+            <td>{{sms.body}}</td>
+            <td>{{sms.number}}</td>
+            <td>{{sms.date}}</td>
+			<td>{{sms.createdAt}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock %}
