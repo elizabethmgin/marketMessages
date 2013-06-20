@@ -27,7 +27,7 @@ lm = LoginManager()
 lm.init_app(app)
 lm.login_view = 'login'
 
-from .vapp import views, models
+from ..vapp import views, models
 
 
 
