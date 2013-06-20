@@ -1,6 +1,7 @@
 from flask import Flask
 from peewee import *
 import os,sys
+from flask.ext.login import login_user, logout_user, current_user, login_required, LoginManager
 os.chdir('/home/ginontherocks/public_python/marketMessages/deploy')
 
 
