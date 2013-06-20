@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect
 from vapp import app
 from peewee import *
 from models import Market, Seller, Number, SMS, List, ListRelationship, Outbox, User
-from config import SECRET_KEY, SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, PAYLOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
+# from config import SECRET_KEY, SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, PAYLOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
 import requests
 from flask import request
 import sys, datetime, json, pprint, ast
