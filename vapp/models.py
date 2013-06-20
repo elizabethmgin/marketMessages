@@ -1,8 +1,10 @@
 from vapp import app
 from vapp import database
 from peewee import *
-from config import ROLE_USER, ROLE_ADMIN
 import datetime
+
+ROLE_USER = 0
+ROLE_ADMIN = 1
 
 class BaseModel(Model):
     class Meta:
