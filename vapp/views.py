@@ -803,44 +803,44 @@ def hello():
 @app.route('/login', methods = ['GET', 'POST'])
 def login():
     print >> sys.stderr, "within login"
-    if request.method == 'POST':
-        print >> sys.stderr, "within POST"
+    # if request.method == 'POST':
+        # print >> sys.stderr, "within POST"
         # print >> sys.stderr, s.auth
-        try:
-            print >> sys.stderr, "within try"
-            if g.user is not None and g.user.is_authenticated():
-                print >> sys.stderr, "g.user is not None and is_authenticated()"
-                return redirect(url_for('sms_received'))
-            auth = request.args.get('auth')
-            print >> sys.stderr, auth
-            print >> sys.stderr, type(auth)
-            authList = ast.literal_eval(auth)
-            print >> sys.stderr, type(authList)
-            authDict = authList[0]
-            print >> sys.stderr, authDict
-            password = authDict['pw']
-            username = authDict['user']
-            user = User.get(User.username == username and User.password == password)
-            print >> sys.stderr, user
-            # user = User.get(User.username == s.auth[0] and User.password == s.auth[1])
-            # print >> sys.stderr, user
-            if user is not None:
-                print >> sys.stderr, "user is not None"
-                login_user(user, remember = True)
-                return redirect(request.args.get('next') or url_for('sms_received'))
-            else:
-                # flash('Invalid login. Please try again.')
-                print >> sys.stderr, "not authenticated!"
-                return redirect(url_for('login'))
-        except:
-            print >> sys.stderr, "within except"
-            print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
-            print >> sys.stderr, str(sys.exc_info()[1])
-            statement = 'An exception has Occured'+ str(sys.exc_type) + '[' + str(sys.exc_value) + ']'
-            return statement
-    else:
-        print 'oops!'
-        return "that wasn't a post!"
+    try:
+        print >> sys.stderr, "within try"
+        if g.user is not None and g.user.is_authenticated():
+            print >> sys.stderr, "g.user is not None and is_authenticated()"
+            return redirect(url_for('sms_received'))
+        auth = request.args.get('auth')
+        print >> sys.stderr, auth
+        print >> sys.stderr, type(auth)
+        authList = ast.literal_eval(auth)
+        print >> sys.stderr, type(authList)
+        authDict = authList[0]
+        print >> sys.stderr, authDict
+        password = authDict['pw']
+        username = authDict['user']
+        user = User.get(User.username == username and User.password == password)
+        print >> sys.stderr, user
+        # user = User.get(User.username == s.auth[0] and User.password == s.auth[1])
+        # print >> sys.stderr, user
+        if user is not None:
+            print >> sys.stderr, "user is not None"
+            login_user(user, remember = True)
+            return redirect(request.args.get('next') or url_for('sms_received'))
+        else:
+            # flash('Invalid login. Please try again.')
+            print >> sys.stderr, "not authenticated!"
+            return redirect(url_for('login'))
+    except:
+        print >> sys.stderr, "within except"
+        print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
+        print >> sys.stderr, str(sys.exc_info()[1])
+        statement = 'An exception has Occured'+ str(sys.exc_type) + '[' + str(sys.exc_value) + ']'
+        return statement
+    # else:
+    #     print 'oops!'
+    #     return "that wasn't a post!"
 
 @app.route('/logout')
 def logout():
