@@ -873,36 +873,35 @@ def index(password):
         return statement
 
 @app.route('/sms_received/', methods=['POST', 'GET'])
-@login_required
 def sms_received():
     if request.method == 'POST':
         print >> sys.stderr, "Received POST request to /sms_received/"
         try:
             print >> sys.stderr, "within try"
-            # auth = request.args.get('auth')
-            # print auth
-            # print type(auth)
-            # authList = ast.literal_eval(auth)
-            # print type(authList)
-            # authDict = authList[0]
-            # print authDict
-            # payloadDict = PAYLOAD[0]
-            # print payloadDict
-            # if (authDict['pw'] == payloadDict['pw']) and (authDict['user'] == payloadDict['user']):
-            #     print >> sys.stderr, "within auth"
-            messages = request.args.get('messages')
-            print messages
-            print type(messages)
-            messageList = ast.literal_eval(messages)
-            print messageList
-            print type(messageList)
-            for m in messageList:
-                incoming_SMS(m)
-                print >> sys.stderr, "within messageList for loop...it may be working"
-            return messages
-            # else:
-            #     statement = "not authenticated!"
-            #     return statement
+            auth = request.args.get('auth')
+            print auth
+            print type(auth)
+            authList = ast.literal_eval(auth)
+            print type(authList)
+            authDict = authList[0]
+            print authDict
+            payloadDict = POST_LOAD[0]
+            print payloadDict
+            if (authDict['pw'] == payloadDict['pw']) and (authDict['user'] == payloadDict['user']):
+                print >> sys.stderr, "within auth"
+                messages = request.args.get('messages')
+                print messages
+                print type(messages)
+                messageList = ast.literal_eval(messages)
+                print messageList
+                print type(messageList)
+                for m in messageList:
+                    incoming_SMS(m)
+                    print >> sys.stderr, "within messageList for loop...it may be working"
+                return messages
+            else:
+                statement = "not authenticated!"
+                return statement
         except:
             print >> sys.stderr, "within except"
             print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
