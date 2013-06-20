@@ -1,7 +1,7 @@
 from flask import Flask
 from peewee import *
 import os,sys
-from flask.ext.login import login_user, logout_user, current_user, login_required, LoginManager
+from flask.ext.login import LoginManager
 os.chdir('/home/ginontherocks/public_python/marketMessages/deploy')
 
 
@@ -24,7 +24,7 @@ except:
 database.connect()
 
 lm = LoginManager()
-lm.init_app(app)
+lm.init_app(vapp)
 lm.login_view = 'login'
 
 from vapp import views, models
