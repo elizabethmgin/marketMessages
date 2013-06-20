@@ -3,7 +3,7 @@ from vapp import app, lm
 from peewee import *
 from models import Market, Seller, Number, SMS, List, ListRelationship, Outbox, User
 from config import SECRET_KEY, SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, POST_LOAD, GET_LOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
-from flask.ext.login import login_user, logout_user, current_user, login_required
+from flask.ext.login import LoginManager, login_user, logout_user, current_user, login_required
 import requests
 import sys, datetime, json, pprint, ast
 
@@ -843,6 +843,7 @@ def login():
     else:
         print 'oops!'
         return "that wasn't a post!"
+    return render_template("login.html")
 
 @app.route('/logout')
 def logout():

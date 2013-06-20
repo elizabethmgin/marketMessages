@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+
+<form method="POST" action="">
+{{ form.username.label }} {{ form.username(size=20) }}
+{{ form.password.label }} {{ form.password(size=40) }}
+{{ form.number.label }} {{ form.number(size=12) }}
+<input type="submit" value="Post">
+</form>
+
+{% endblock %}
