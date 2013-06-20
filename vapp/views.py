@@ -38,7 +38,7 @@ def create_Message_Dict(messages):
     messageDict = {}
     messageString = str(messages)
     messageDict["messages"] = messageString
-    messageDict["auth"] = str(PAYLOAD)
+    # messageDict["auth"] = str(PAYLOAD)
     # print messageDict
     return messageDict
 
