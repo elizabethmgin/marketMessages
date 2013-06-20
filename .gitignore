@@ -3,7 +3,7 @@
 .db
 .sql
 .sqlite
-USATest.db
+/vapp/USATest.db
 
 # OS generated files #
 ######################
