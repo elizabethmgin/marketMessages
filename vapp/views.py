@@ -3,6 +3,7 @@ from vapp import app
 from peewee import *
 from models import Market, Seller, Number, SMS, List, ListRelationship, Outbox, User
 from config import SECRET_KEY, SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, PAYLOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
+from flask.ext.login import login_user, logout_user, current_user, login_required, LoginManager
 import requests
 from flask import request
 import sys, datetime, json, pprint, ast
@@ -787,14 +788,65 @@ def check_SMS(newSMS):
         create_Outbox_Message(newSMS.number, statement)
         return statement
 
+
+@lm.user_loader
+def load_user(id):
+    return User.get(User.id == int(id))
+
+@app.before_request
+def before_request():
+    g.user = current_user
+
 @app.route('/')
 def hello():
     return str(datetime.datetime.now())
 
-@app.route('/login/')
+@app.route('/login', methods = ['GET', 'POST'])
 def login():
-    statement = 'not logged in'
-    return statement
+    print >> sys.stderr, "within login"
+    if request.method == 'POST':
+        print >> sys.stderr, "within POST"
+        # print >> sys.stderr, s.auth
+        try:
+            print >> sys.stderr, "within try"
+            if g.user is not None and g.user.is_authenticated():
+                print >> sys.stderr, "g.user is not None and is_authenticated()"
+                return redirect(url_for('sms_received'))
+            auth = request.args.get('auth')
+            print >> sys.stderr, auth
+            print >> sys.stderr, type(auth)
+            authList = ast.literal_eval(auth)
+            print >> sys.stderr, type(authList)
+            authDict = authList[0]
+            print >> sys.stderr, authDict
+            password = authDict['pw']
+            username = authDict['user']
+            user = User.get(User.username == username and User.password == password)
+            print >> sys.stderr, user
+            # user = User.get(User.username == s.auth[0] and User.password == s.auth[1])
+            # print >> sys.stderr, user
+            if user is not None:
+                print >> sys.stderr, "user is not None"
+                login_user(user, remember = True)
+                return redirect(request.args.get('next') or url_for('sms_received'))
+            else:
+                # flash('Invalid login. Please try again.')
+                print >> sys.stderr, "not authenticated!"
+                return redirect(url_for('login'))
+        except:
+            print >> sys.stderr, "within except"
+            print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
+            print >> sys.stderr, str(sys.exc_info()[1])
+            statement = 'An exception has Occured'+ str(sys.exc_type) + '[' + str(sys.exc_value) + ']'
+            return statement
+    else:
+        print 'oops!'
+        return "that wasn't a post!"
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 @app.route('/index/<password>')
 def index(password):
@@ -820,35 +872,36 @@ def index(password):
         return statement
 
 @app.route('/sms_received/', methods=['POST', 'GET'])
+@login_required
 def sms_received():
     if request.method == 'POST':
         print >> sys.stderr, "Received POST request to /sms_received/"
         try:
             print >> sys.stderr, "within try"
-            auth = request.args.get('auth')
-            print auth
-            print type(auth)
-            authList = ast.literal_eval(auth)
-            print type(authList)
-            authDict = authList[0]
-            print authDict
-            payloadDict = PAYLOAD[0]
-            print payloadDict
-            if (authDict['pw'] == payloadDict['pw']) and (authDict['user'] == payloadDict['user']):
-                print >> sys.stderr, "within auth"
-                messages = request.args.get('messages')
-                print messages
-                print type(messages)
-                messageList = ast.literal_eval(messages)
-                print messageList
-                print type(messageList)
-                for m in messageList:
-                    incoming_SMS(m)
-                    print >> sys.stderr, "within messageList for loop...it may be working"
-                return messages
-            else:
-                statement = "not authenticated!"
-                return statement
+            # auth = request.args.get('auth')
+            # print auth
+            # print type(auth)
+            # authList = ast.literal_eval(auth)
+            # print type(authList)
+            # authDict = authList[0]
+            # print authDict
+            # payloadDict = PAYLOAD[0]
+            # print payloadDict
+            # if (authDict['pw'] == payloadDict['pw']) and (authDict['user'] == payloadDict['user']):
+            #     print >> sys.stderr, "within auth"
+            messages = request.args.get('messages')
+            print messages
+            print type(messages)
+            messageList = ast.literal_eval(messages)
+            print messageList
+            print type(messageList)
+            for m in messageList:
+                incoming_SMS(m)
+                print >> sys.stderr, "within messageList for loop...it may be working"
+            return messages
+            # else:
+            #     statement = "not authenticated!"
+            #     return statement
         except:
             print >> sys.stderr, "within except"
             print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
