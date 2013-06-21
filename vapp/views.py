@@ -882,7 +882,7 @@ def index(password):
 
 @app.route('/sms_received', methods=['POST', 'GET'])
 def sms_received():
-    # if request.method == 'POST':
+    if request.method == 'POST':
     print >> sys.stderr, "Received POST request to /sms_received/"
     try:
         print >> sys.stderr, "within try"
