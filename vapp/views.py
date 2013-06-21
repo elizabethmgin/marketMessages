@@ -883,42 +883,42 @@ def index(password):
 @app.route('/sms_received', methods=['POST', 'GET'])
 def sms_received():
     if request.method == 'POST':
-    print >> sys.stderr, "Received POST request to /sms_received/"
-    try:
-        print >> sys.stderr, "within try"
-        auth = request.args.get('auth')
-        print auth
-        print type(auth)
-        authList = ast.literal_eval(auth)
-        print type(authList)
-        authDict = authList[0]
-        print authDict
-        payloadDict = POST_LOAD[0]
-        print payloadDict
-        if (authDict['pw'] == payloadDict['pw']) and (authDict['user'] == payloadDict['user']):
-            print >> sys.stderr, "within auth"
-            messages = request.args.get('messages')
-            print messages
-            print type(messages)
-            messageList = ast.literal_eval(messages)
-            print messageList
-            print type(messageList)
-            for m in messageList:
-                incoming_SMS(m)
-                print >> sys.stderr, "within messageList for loop...it may be working"
-            return messages
-        else:
-            statement = "not authenticated!"
+        print >> sys.stderr, "Received POST request to /sms_received/"
+        try:
+            print >> sys.stderr, "within try"
+            auth = request.args.get('auth')
+            print auth
+            print type(auth)
+            authList = ast.literal_eval(auth)
+            print type(authList)
+            authDict = authList[0]
+            print authDict
+            payloadDict = POST_LOAD[0]
+            print payloadDict
+            if (authDict['pw'] == payloadDict['pw']) and (authDict['user'] == payloadDict['user']):
+                print >> sys.stderr, "within auth"
+                messages = request.args.get('messages')
+                print messages
+                print type(messages)
+                messageList = ast.literal_eval(messages)
+                print messageList
+                print type(messageList)
+                for m in messageList:
+                    incoming_SMS(m)
+                    print >> sys.stderr, "within messageList for loop...it may be working"
+                return messages
+            else:
+                statement = "not authenticated!"
+                return statement
+        except:
+            print >> sys.stderr, "within except"
+            print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
+            print >> sys.stderr, str(sys.exc_info()[1])
+            statement = 'An exception has Occured'+ str(sys.exc_type) + '[' + str(sys.exc_value) + ']'
             return statement
-    except:
-        print >> sys.stderr, "within except"
-        print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
-        print >> sys.stderr, str(sys.exc_info()[1])
-        statement = 'An exception has Occured'+ str(sys.exc_type) + '[' + str(sys.exc_value) + ']'
-        return statement
-    # else:
-    #     print 'oops!'
-    #     return 'nice try but that was a POST'
+    else:
+        print 'oops!'
+        return 'nice try but that was a POST'
         
 @app.route('/sms_to_send/', methods=['POST', 'GET'])
 def sms_to_send():
