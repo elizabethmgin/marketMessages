@@ -17,5 +17,8 @@ config.pyc
 # Other files #
 ###############
 phoneServer.py
+phoneServerUSA.py
+phoneServerUganda.py
 phone.py
 phoneGIT.py
+.txt
