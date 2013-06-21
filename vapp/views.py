@@ -34,6 +34,7 @@ def create_SMS(read, body, id, date, address):
 # pass list of messages
 # return messageDict   
 def create_Message_Dict(messages):
+    print >> sys.stderr, "within create_Message_Dict()"
     messageDict = {}
     messageString = str(messages)
     messageDict["messages"] = messageString

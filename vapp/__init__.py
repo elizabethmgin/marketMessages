@@ -28,7 +28,7 @@ lm.init_app(app)
 lm.login_view = 'login'
 
 from vapp.models import *
-from vapp.views import *
+from vapp import views
 
 
 
