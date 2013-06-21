@@ -72,8 +72,6 @@ class Seller(BaseModel):
                     
 class Number(BaseModel):
     number = IntegerField(index=True)
-    createdAt = DateTimeField(default=datetime.datetime.now)
-    modifiedAt = DateTimeField(default=datetime.datetime.now)
     isActive = BooleanField(default=True)
     seller = ForeignKeyField(Seller, related_name="sellerNumbers", null=True, index=True)
     market = ForeignKeyField(Market, related_name="marketNumbers", null=True, index=True)
