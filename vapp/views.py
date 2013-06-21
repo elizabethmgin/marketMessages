@@ -208,6 +208,7 @@ def create_Outbox_Message(number, body): # parameters I could add to function, m
 # create a new mini List from information contained in stored SMS, or add numbers to a pre-existing mini List
 # return confirmation statement
 def create_Mini_Seller_List(newSMS):
+    print >> sys.stderr, "inside create_Mini_Seller_List()"
     seller = get_Seller(newSMS.number)
     bodyList = split_Body(newSMS)
     bodyList.pop(0) # remove create keyword
@@ -562,8 +563,9 @@ def create_Seller_Number_Association(oldNumber, newNumber):
 # return statement 
 def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
     print >> sys.stderr, "inside check_Seller_Keywords"
-    listNames.remove('bugolobi market')
+    # listNames.remove('bugolobi market')
     if (bodyList[0] == 'okuyiya') or (bodyList[0] == 'create'): # create 
+        print >> sys.stderr, "inside okuyiya"
         statement = create_Mini_Seller_List(newSMS)
     elif (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'): # join
         if newSMS.number.isActive == False:
