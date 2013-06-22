@@ -5,7 +5,7 @@ from flask.ext.login import LoginManager
 os.chdir('/home/ginontherocks/public_python/marketMessages/deploy')
 
 
-DATABASE = '/home/ginontherocks/public_python/marketMessages/deploy/vapp/USATest.db'
+DATABASE = '/home/ginontherocks/public_python/marketMessages/deploy/vapp/Uganda06212013.db'
 s = os.getcwd()
 print >> sys.stderr, "directory --------->"
 print >> sys.stderr, s
