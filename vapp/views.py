@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from vapp import app, lm
 from peewee import *
 from models import Market, Seller, Number, SMS, List, ListRelationship, Outbox, User
-from config import SECRET_KEY, SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, POST_LOAD, GET_LOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
+# from config import SECRET_KEY, SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, POST_LOAD, GET_LOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
 from flask.ext.login import LoginManager, login_user, logout_user, current_user, login_required
 import requests
 import sys, datetime, json, pprint, ast
