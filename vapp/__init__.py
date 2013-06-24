@@ -18,19 +18,19 @@ print >> sys.stderr, "after app = Flask(__name__)"
 # app.config.from_object('config')
 app.config.from_pyfile('config.py') 
 
+try:
+    db = SqliteDatabase(DB, threadlocals=True)
+    s = os.getcwd()
+    print >> sys.stderr, "directory within database try --------->"
+    print >> sys.stderr, s
+    print >> sys.stderr, DB
 
-db = SqliteDatabase(DB, threadlocals=True)
-s = os.getcwd()
-print >> sys.stderr, "directory within database try --------->"
-print >> sys.stderr, s
-print >> sys.stderr, DB
-
-#except:
- #   print >> sys.stderr, str(sys.exc_info()[0])
-  #  print >> sys.stderr, str(sys.exc_info()[1])
-s = os.getcwd()
-print >> sys.stderr, "directory after database try and except --------->"
-print >> sys.stderr, s
+except:
+    print >> sys.stderr, str(sys.exc_info()[0])
+    print >> sys.stderr, str(sys.exc_info()[1])
+    s = os.getcwd()
+    print >> sys.stderr, "directory within except --------->"
+    print >> sys.stderr, s
 
 db.connect()
 
