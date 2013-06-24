@@ -1,5 +1,5 @@
 from vapp import app
-from vapp import database
+from vapp import db
 from peewee import *
 import datetime
 
@@ -8,7 +8,7 @@ ROLE_ADMIN = 1
 
 class BaseModel(Model):
     class Meta:
-        database = database
+        database = db
         
 class User(BaseModel):
     username = CharField()
