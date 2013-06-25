@@ -2,13 +2,10 @@ from flask import Flask
 from peewee import *
 import os,sys
 from flask.ext.login import LoginManager
-from config import *
-# os.chdir('/home/ginontherocks/public_python/development/deploy')
-# os.chdir('/home/ginontherocks/public_python/development/deploy/vapp')
+from config import PATH_NAME, DATABASE
+os.chdir(PATH_NAME)
 
 
-
-# DB = '/home/ginontherocks/public_python/development/deploy/vapp/USATest.db'
 s = os.getcwd()
 print >> sys.stderr, "directory --------->"
 print >> sys.stderr, s
@@ -16,14 +13,13 @@ print >> sys.stderr, s
 app = Flask(__name__)
 print >> sys.stderr, "after app = Flask(__name__)"
 app.config.from_object('config')
-# app.config.from_pyfile('config.py') 
 
 try:
-    db = SqliteDatabase(DB, threadlocals=True)
+    database = SqliteDatabase(DATABASE, threadlocals=True)
     s = os.getcwd()
     print >> sys.stderr, "directory within database try --------->"
     print >> sys.stderr, s
-    print >> sys.stderr, DB
+    print >> sys.stderr, DATABASE
 
 except:
     print >> sys.stderr, str(sys.exc_info()[0])
@@ -32,7 +28,7 @@ except:
     print >> sys.stderr, "directory within except --------->"
     print >> sys.stderr, s
 
-db.connect()
+database.connect()
 
 lm = LoginManager()
 lm.init_app(app)
