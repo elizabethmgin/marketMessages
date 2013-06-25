@@ -2,10 +2,10 @@ from flask import Flask
 from peewee import *
 import os,sys
 from flask.ext.login import LoginManager
-os.chdir('/home/ginontherocks/public_python/marketMessages/deploy')
+from config import PATH_NAME, DATABASE
+os.chdir(PATH_NAME)
 
 
-from config import DATABASE #= '/home/ginontherocks/public_python/marketMessages/deploy/vapp/Uganda06212013.db'
 s = os.getcwd()
 print >> sys.stderr, "directory --------->"
 print >> sys.stderr, s
