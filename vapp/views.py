@@ -931,16 +931,18 @@ def sms_to_send():
             messageList = []
             for message in Outbox.select():
                 if message.sent == False:
-                    mlist = [message.number.number, message.body]
+		    mlist = [message.number.number, message.body]
                     messageList.append(mlist)
-                    update_query = Outbox.update(sent=True).where(Outbox.id == message.id)
-                    update_query.execute()
-                    update_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.id == message.id)
-                    update_query.execute()
                 else:
-                    print >> sys.stderr, 'message has already been sent'
+                    # print >> sys.stderr, 'message has already been sent'
+		    statement = 'messages already sent'
             if messageList:
-                messageDict = create_Message_Dict(messageList) 
+                messageDict = create_Message_Dict(messageList)
+		for message in Outbox.select():
+		    # update_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.sent == False)
+                    # update_query.execute()
+		    update_query = Outbox.update(sent=True and modifiedAt=datetime.datetime.now()).where(Outbox.sent == False)
+                    update_query.execute()
             else:
                 mStr = 'no new messages'
                 messageList.append(mStr)
