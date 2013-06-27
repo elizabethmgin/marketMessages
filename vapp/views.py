@@ -267,6 +267,7 @@ def add_Numbers(listObject, numberList, createdBy):
             print number
             statement = 'E nnamba yayingizi ddwamu bubi'
             # This number was entered incorrectly
+            create_Outbox_Message(ownerNumberObject, statement)
         else:
             numberID = store_Number(number)
             numberObject = get_Number_Object(number)
@@ -279,12 +280,15 @@ def add_Numbers(listObject, numberList, createdBy):
                 identity = form_Identity(createdBy)
                 statement = str(numberObject.number) + ' eyungiddwa ku lukalala lwo ' + str(identity)
                 # this phone number was added to your list by
-		create_Outbox_Message(ownerNumberObject, statement)
-                memberStatement = str(identity) + " akuyunze kulukalala luno: " + str(listObject.name) + ". Okulambika ebikwatako tandika obubaka bwo n'ekigambo Nze. (Okugeza: Nze erinnya ly'ekika erinnya epatiike)"
-                # someone added you to the following list, to se your identity, start your message with ME. (i.e. ME familyName givenName)
-		create_Outbox_Message(numberObject, memberStatement)
-                # moreStatement = "Okuddamu tandika obubaka bwo nekigambo '" + str(listObject.name) + " owner'. Okuddamu eri bonna, tandika obubaka bwo n'ekigambo '" + str(listObject.name) + "'"
-                # create_Outbox_Message(numberObject, moreStatement)
+		        create_Outbox_Message(ownerNumberObject, statement)
+		if numberObject.seller:
+            memberStatement = str(identity) + " akuyunze kulukalala luno: " + str(listObject.name) + ". Okuddamu eri bonna, tandika obubaka bwo n'ekigambo '" + str(listObject.name) + "' oba '"+ str(listObject.name) + " owner'"
+            # someone added you to the following list.
+		    create_Outbox_Message(numberObject, memberStatement)
+		else:
+		    nonmemberStatement = str(identity) + " akuyunze kulukalala luno: " + str(listObject.name) + ". Okulambika ebikwatako tandika obubaka bwo n'ekigambo Nze. (Okugeza: Nze erinnya ly'ekika erinnya epatiike)"
+            # someone added you to the following list, to se your identity, start your message with ME. (i.e. ME familyName givenName)
+            create_Outbox_Message(numberObject, nonmemberStatement)
     return statement
 
 # pass Seller object and List name
