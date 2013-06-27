@@ -11,9 +11,9 @@ SPAM = [0, 180, 727272, 456, 24273, 40404]
 
 KEYWORDS = ['join', 'okuyunga', 'me']
 
-SELLER_KEYWORDS = ['join', 'okuyunga', 'create', 'okuyiya', 'kuvawo', 'leave', 'me']
+SELLER_KEYWORDS = ['join', 'okuyunga', 'create', 'okutandikawo', 'kuvawo', 'leave', 'me']
 
-HELP_KEYWORDS = ['join', 'okuyunga', 'create', 'okuyiya', 'help', 'obuyambi', 'me', 'who', 'okugata', 'add']
+HELP_KEYWORDS = ['join', 'okuyunga', 'create', 'okutandikawo', 'help', 'obuyambi', 'me', 'who', 'okugata', 'add']
 
 MARKETLISTS = ['bugolobi market', 'monachello market', 'wind tunnel market']
 
@@ -590,8 +590,8 @@ def create_Seller_Number_Association(oldNumber, newNumber):
 def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
     print >> sys.stderr, "inside check_Seller_Keywords"
     # listNames.remove('bugolobi market')
-    if (bodyList[0] == 'okuyiya') or (bodyList[0] == 'create'): # create 
-        print >> sys.stderr, "inside okuyiya"
+    if (bodyList[0] == 'okutandikawo') or (bodyList[0] == 'create'): # create 
+        print >> sys.stderr, "inside okutandikawo"
         statement = create_Mini_Seller_List(newSMS)
     elif (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'): # join
         if newSMS.number.isActive == False:
@@ -630,8 +630,8 @@ def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
         print >> sys.stderr, 'within check_Seller_Keywords me'
         statement = modify_Seller(newSMS, bodyList)
     else:
-        statement = "Twetonda obubaka bwo tetubutegedde. Okuyiya: tandiikawo olukalala lwo mu bufunze \n Okugata: gattako olukalala olulwo \n Kuvawo: leekawo lukalala lwonna"
-        # Sorry, we didn't understand your message. Okuyiya: create your own list \n Okugata: add a number to your list \n Kuvawo: leave all mailing lists
+        statement = "Twetonda obubaka bwo tetubutegedde. Okutandikawo: tandiikawo olukalala lwo mu bufunze \n Okugata: gattako olukalala olulwo \n Kuvawo: leekawo lukalala lwonna"
+        # Sorry, we didn't understand your message. okutandikawo: create your own list \n Okugata: add a number to your list \n Kuvawo: leave all mailing lists
         create_Outbox_Message(newSMS.number, statement)
     return statement
 
@@ -646,12 +646,12 @@ def check_Keywords(newSMS, bodyList, seller):
 
 def help_Function(newSMS, bodyList):
     if (bodyList[0] == 'help') or (bodyList[0] == 'obuyambi'):
-        statement = "Olukalala lw'omu katale k'e Bugolobi lukosobozesa okusindikira abantu obubaka. Reply with one of these keywords: okuyunga, okuyiya, okugata" #explanation of how to join
+        statement = "Olukalala lw'omu katale k'e Bugolobi lukosobozesa okusindikira abantu obubaka. Reply with one of these keywords: okuyunga, okutandikawo, okugata" #explanation of how to join
         # The Bugolobi Market Mailing List allows you to send messages to over 40 members, but you only need to pay for one message! Instructions on how to join, etc.
         create_Outbox_Message(newSMS.number, statement)
-    elif (bodyList[0] == 'okuyiya') or (bodyList[0] == 'create'):
-        statement = "Bwoba oli memba, osobola okutandikawo olukalala lwo: 'okuyiya listname number number number'"
-        # If you are already a member, you can create your own private list: 'okuyiya listname number number number'
+    elif (bodyList[0] == 'okutandikawo') or (bodyList[0] == 'create'):
+        statement = "Bwoba oli memba, osobola okutandikawo olukalala lwo: 'okutandikawo listname number number number'"
+        # If you are already a member, you can create your own private list: 'okutandikawo listname number number number'
 	create_Outbox_Message(newSMS.number, statement)
     elif (bodyList[0] == 'okugata') or (bodyList[0] == 'add'):
         statement = "Bwoba oli memba ku lukalala luno osobola okugatako abantu abalala ku lukalala olwo (elinnya ly'olukalala n'ogatako ennamba yo)"
