@@ -736,7 +736,14 @@ def check_SMS(newSMS):
     bodyList = split_Body(newSMS)
     listNames = get_Mini_ListNames(newSMS.number) # pass Number object, get list of names of mini Lists that Number has List Relationship with
     print >> sys.stderr, listNames
-    if (bodyList[0] in listNames): # sender is any member of mini list EXCEPT the creator/owner of the mini list
+    if not newSMS.body:
+        if check_Seller_Exists(newSMS.number):
+            statement = promote_SMS(newSMS, seller.market.name)
+        else:
+            statement = 'That message was blank. Please try resending.'
+            create_Outbox_Message(newSMS.number, statement)
+            return statement
+    elif (bodyList[0] in listNames): # sender is any member of mini list EXCEPT the creator/owner of the mini list
         print >> sys.stderr, "inside bodyList in listNames"
         listName = str(bodyList[0])
         print >> sys.stderr, listName
