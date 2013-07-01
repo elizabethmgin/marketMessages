@@ -738,6 +738,7 @@ def check_SMS(newSMS):
     print >> sys.stderr, listNames
     if not newSMS.body:
         if check_Seller_Exists(newSMS.number):
+            seller = get_Seller(newSMS.number)
             statement = promote_SMS(newSMS, seller.market.name)
         else:
             statement = 'That message was blank. Please try resending.'
