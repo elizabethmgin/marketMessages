@@ -976,7 +976,7 @@ def sms_to_send():
             for message in Outbox.select():
                 if message.sent == False:
 		    #print >> sys.stderr, message
-		    #mlist = [message.number.number, message.body]
+		    mlist = [message.number.number, message.body]
                     messageList.append(mlist)
 		    print >> sys.stderr, messageList
 		    update_query = Outbox.update(sent=True).where(Outbox.id == message.id)
