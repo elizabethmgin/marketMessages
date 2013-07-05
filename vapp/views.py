@@ -11,9 +11,9 @@ SPAM = [0, 180, 727272, 456, 24273, 40404]
 
 KEYWORDS = ['join', 'okuyunga', 'me']
 
-SELLER_KEYWORDS = ['join', 'okuyunga', 'create', 'tandikawo', 'kuvawo', 'leave', 'me']
+SELLER_KEYWORDS = ['join', 'okuyunga', 'create', 'tandikawo', 'okutandikawo', 'kuvawo', 'leave', 'me']
 
-HELP_KEYWORDS = ['join', 'okuyunga', 'create', 'tandikawo', 'help', 'obuyambi', 'me', 'who', 'okugata', 'add']
+HELP_KEYWORDS = ['join', 'okuyunga', 'create', 'tandikawo', 'okutandikawo', 'help', 'obuyambi', 'me', 'who', 'okugata', 'add']
 
 MARKETLISTS = ['bugolobi market', 'monachello market', 'wind tunnel market']
 
@@ -594,7 +594,7 @@ def create_Seller_Number_Association(oldNumber, newNumber):
 def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
     print >> sys.stderr, "inside check_Seller_Keywords"
     # listNames.remove('bugolobi market')
-    if (bodyList[0] == 'tandikawo') or (bodyList[0] == 'create'): # create 
+    if ((bodyList[0] == 'tandikawo') or (bodyList[0]=='okutandikawo')) or (bodyList[0] == 'create'): # create 
         print >> sys.stderr, "inside tandikawo"
         statement = create_Mini_Seller_List(newSMS)
     elif (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'): # join
@@ -653,7 +653,7 @@ def help_Function(newSMS, bodyList):
         statement = "Olukalala lw'omu katale k'e Bugolobi lukosobozesa okusindikira abantu obubaka. Reply with one of these keywords: okuyunga, tandikawo, okugata" #explanation of how to join
         # The Bugolobi Market Mailing List allows you to send messages to over 40 members, but you only need to pay for one message! Instructions on how to join, etc.
         create_Outbox_Message(newSMS.number, statement)
-    elif (bodyList[0] == 'tandikawo') or (bodyList[0] == 'create'):
+    elif ((bodyList[0] == 'tandikawo') or (bodyList[0]=='okutandikawo')) or (bodyList[0] == 'create'):
         statement = "Bwoba oli memba, osobola okutandikawo olukalala lwo: 'tandikawo listname number number number'"
         # If you are already a member, you can create your own private list: 'tandikawo listname number number number'
 	create_Outbox_Message(newSMS.number, statement)

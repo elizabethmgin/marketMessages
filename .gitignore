@@ -3,6 +3,9 @@
 .db
 .sql
 .sqlite
+USATest.db
+Uganda06212013.db
+marketMessages.wsgi
 /vapp/USATest.db
 /vapp/Uganda06212013.db
 /vapp/Uganda06212013.db-journal
