@@ -9,11 +9,11 @@ import sys, datetime, json, pprint, ast
 
 SPAM = [0, 180, 727272, 456, 24273, 40404]
 
-KEYWORDS = ['join', 'okuyunga', 'me']
+KEYWORDS = ['join', 'okuyunga', 'me', 'nze']
 
-SELLER_KEYWORDS = ['join', 'okuyunga', 'create', 'tandikawo', 'okutandikawo', 'kuvawo', 'leave', 'me']
+SELLER_KEYWORDS = ['join', 'okuyunga', 'start', 'tandikawo', 'okutandikawo', 'kuvawo', 'leave', 'me', 'nze']
 
-HELP_KEYWORDS = ['join', 'okuyunga', 'create', 'tandikawo', 'okutandikawo', 'help', 'obuyambi', 'me', 'who', 'okugata', 'add']
+HELP_KEYWORDS = ['join', 'okuyunga', 'start', 'tandikawo', 'okutandikawo', 'help', 'obuyambi', 'me', 'nze', 'who', 'ani', 'yongerako', 'add']
 
 MARKETLISTS = ['bugolobi market', 'monachello market', 'wind tunnel market']
 
@@ -282,11 +282,11 @@ def add_Numbers(listObject, numberList, createdBy):
                 # this phone number was added to your list by
                 create_Outbox_Message(ownerNumberObject, statement)
 	    if numberObject.seller:
-                memberStatement = str(identity) + " akuyunze kulukalala luno: " + str(listObject.name) + ". Okuddamu eri bonna, tandika obubaka bwo n'ekigambo '" + str(listObject.name) + "' oba '"+ str(listObject.name) + " owner'"
+                memberStatement = str(identity) + ", memba ku Bugolobi Mailing List, akuyunze kulukalala luno: " + str(listObject.name) + ". Okuddamu eri bonna, tandika obubaka bwo n'ekigambo '" + str(listObject.name) + "' oba '"+ str(listObject.name) + " owner'"
                 # someone added you to the following list.
 		create_Outbox_Message(numberObject, memberStatement)
 	    else:
-		nonmemberStatement = str(identity) + " akuyunze kulukalala luno: " + str(listObject.name) + ". Okulambika ebikwatako tandika obubaka bwo n'ekigambo Nze. (Okugeza: Nze erinnya ly'ekika erinnya epatiike)"
+		nonmemberStatement = str(identity) + ", memba ku Bugolobi Mailing List, akuyunze kulukalala luno: " + str(listObject.name) + ". Okulambika ebikwatako tandika obubaka bwo n'ekigambo Nze. (Okugeza: Nze erinnya ly'ekika erinnya epatiike)"
                 # someone added you to the following list, to se your identity, start your message with ME. (i.e. ME familyName givenName)
                 create_Outbox_Message(numberObject, nonmemberStatement)
     return statement
@@ -543,7 +543,7 @@ def incoming_SMS(message):
 
 def modify_Seller(newSMS, bodyList):
     print >> sys.stderr, "inside modify_Seller"
-    if (check_Seller_Exists(newSMS.number)) and bodyList[0] == 'me':
+    if (check_Seller_Exists(newSMS.number)) and ((bodyList[0] == 'me') or (bodyList[0] == 'nze')):
         print >> sys.stderr, "within modify_Seller, seller exists + me"
         seller = get_Seller(newSMS.number)
         if len(bodyList) == 3:
@@ -616,7 +616,7 @@ def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
     elif (bodyList[0] == 'kuvawo') or (bodyList[0] == 'leave'): # leave
         print >> sys.stderr, "inside elif kuvawo"
         statement = deactivate_Number(newSMS) # leave all lists
-    elif (bodyList[0] == 'okugata') or (bodyList[0] == 'add'):
+    elif (bodyList[0] == 'yongerako') or (bodyList[0] == 'add'):
         miniSellersListNames = get_Mini_Sellers_ListNames(seller)
         if (bodyList[1] in miniSellersListNames):
             listName = str(bodyList[1])
@@ -630,12 +630,12 @@ def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
             statement = "Twetonda, tolina lukalala luyitibwa " + str(bodyList[1]) + ". Okutandikawo olukalala, sindika obubaka ng'ogoberera emitendera gino: Tandikawo, erinnya lyo ozzeeko e namba oe  z'oyagala okuyunga ko."
             create_Outbox_Message(newSMS.number, statement)
 	    # Sorry you dont have a list called listName. To create a list send a message following these steps- create your name and the number you want add.
-    elif (bodyList[0] == 'me'):
+    elif (bodyList[0] == 'me') or (bodyList[0] == 'nze'):
         print >> sys.stderr, 'within check_Seller_Keywords me'
         statement = modify_Seller(newSMS, bodyList)
     else:
-        statement = "Twetonda obubaka bwo tetubutegedde. Tandikawo: tandikawo olukalala lwo mu bufunze \n Okugata: gattako olukalala olulwo \n Kuvawo: leekawo lukalala lwonna"
-        # Sorry, we didn't understand your message. tandikawo: create your own list \n Okugata: add a number to your list \n Kuvawo: leave all mailing lists
+        statement = "Twetonda obubaka bwo tetubutegedde. Tandikawo: tandikawo olukalala lwo mu bufunze \n Yongerako: gattako olukalala olulwo \n Kuvawo: leekawo lukalala lwonna"
+        # Sorry, we didn't understand your message. tandikawo: create your own list \n Yongerako: add a number to your list \n Kuvawo: leave all mailing lists
         create_Outbox_Message(newSMS.number, statement)
     return statement
 
@@ -650,16 +650,16 @@ def check_Keywords(newSMS, bodyList, seller):
 
 def help_Function(newSMS, bodyList):
     if (bodyList[0] == 'help') or (bodyList[0] == 'obuyambi'):
-        statement = "Olukalala lw'omu katale k'e Bugolobi lukosobozesa okusindikira abantu obubaka. Reply with one of these keywords: okuyunga, tandikawo, okugata" #explanation of how to join
+        statement = "Olukalala lw'omu katale k'e Bugolobi lukosobozesa okusindikira abantu obubaka. Reply with one of these keywords: okuyunga, tandikawo, yongerako" #explanation of how to join
         # The Bugolobi Market Mailing List allows you to send messages to over 40 members, but you only need to pay for one message! Instructions on how to join, etc.
         create_Outbox_Message(newSMS.number, statement)
     elif ((bodyList[0] == 'tandikawo') or (bodyList[0]=='okutandikawo')) or (bodyList[0] == 'create'):
         statement = "Bwoba oli memba, osobola okutandikawo olukalala lwo: 'tandikawo listname number number number'"
         # If you are already a member, you can create your own private list: 'tandikawo listname number number number'
 	create_Outbox_Message(newSMS.number, statement)
-    elif (bodyList[0] == 'okugata') or (bodyList[0] == 'add'):
-        statement = "Bwoba oli memba ku lukalala luno osobola okugatako abantu abalala ku lukalala olwo (elinnya ly'olukalala n'ogatako ennamba yo)"
-	# If you are a member of a private list, you can add other participants to that list: 'listname okugata number'
+    elif (bodyList[0] == 'yongerako') or (bodyList[0] == 'add'):
+        statement = "Bwoba oli memba ku lukalala luno osobola okugatako abantu abalala ku lukalala olwo (elinnya ly'olukalala yongerako ennamba yo)"
+	# If you are a member of a private list, you can add other participants to that list: 'listname yongerako number'
         create_Outbox_Message(newSMS.number, statement)
     elif (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'):
         if newSMS.number.isActive == False:
@@ -670,11 +670,11 @@ def help_Function(newSMS, bodyList):
         else:
             statement = "Okutwegattako Goberera enkola eno 'okuyunga Erinnya Eppaatiike Erinnya Ery'ekika Byotunda'"
             create_Outbox_Message(newSMS.number, statement)
-    elif (bodyList[0] == 'me'):
+    elif (bodyList[0] == 'me') or (bodyList[0] == 'nze'):
         statement = "Ddamu ne 'nze erinnya epastiike erinnya ly'ekika' okutereza ebikwatako"
 	# Reply with 'me givenName familyName' to update your personal information.
         create_Outbox_Message(newSMS.number, statement)
-    elif (bodyList[0] == 'who'):
+    elif (bodyList[0] == 'who') or (bodyList[0] == 'ani'):
         statement = "Damu ne 'erinnya lyolukalala' okulaba abali ku lukalala"
 	# Reply with 'listname who' to see who is on a private list.
         create_Outbox_Message(newSMS.number, statement)
@@ -741,7 +741,7 @@ def check_SMS(newSMS):
             seller = get_Seller(newSMS.number)
             statement = promote_SMS(newSMS, seller.market.name)
         else:
-            statement = 'That message was blank. Please try resending.'
+            statement = 'Obubaka tebutuuse kubuli omu! That message was blank. Please try resending.'
             create_Outbox_Message(newSMS.number, statement)
             return statement
     elif (bodyList[0] in listNames): # sender is any member of mini list EXCEPT the creator/owner of the mini list
@@ -749,7 +749,7 @@ def check_SMS(newSMS):
         listName = str(bodyList[0])
         print >> sys.stderr, listName
         bodyList.pop(0) # remove list name
-        if (bodyList[0] == 'okugata') or (bodyList[0] == 'add'): # member of list trying to add new member to list
+        if (bodyList[0] == 'yongerako') or (bodyList[0] == 'add'): # member of list trying to add new member to list
             print >> sys.stderr, 'within check_SMS add'
             bodyList.pop(0) # remove keyword so that it is just a list of numbers
             numberList = bodyList # list name and keyword removed so that it is just a list of numbers
@@ -757,7 +757,7 @@ def check_SMS(newSMS):
             createdBy = newSMS.number
             statement = add_Numbers(l, numberList, createdBy)
             return statement
-        elif (bodyList[0] == 'who'):
+        elif (bodyList[0] == 'who') or (bodyList[0] == 'ani'):
             print >> sys.stderr, 'within check_SMS who'
             whoStr = query_ListRelationship(listName)
             create_Outbox_Message(newSMS.number, str(whoStr))
@@ -774,7 +774,7 @@ def check_SMS(newSMS):
             create_Outbox_Message(newSMS.number, statement)
             return message
         elif (len(bodyList) == 0) or (bodyList[0] =='help') or (bodyList[0] == 'obuyambi'):
-            statement = "Obubaka tebutuuse kubuli omu! Tandika obubakabwo ne '" + listName + "' oba '" + listName + " owner' oba '" + listName + " who' "
+            statement = "Obubaka tebutuuse kubuli omu! Tandika obubakabwo ne '" + listName + "' oba '" + listName + " owner' oba '" + listName + " ani' "
             # That message didn't go to anyone! Either begin your message with listName or listName owner or listName who
 	    create_Outbox_Message(newSMS.number, statement)
             return statement
@@ -788,7 +788,7 @@ def check_SMS(newSMS):
         print >> sys.stderr, "elif bodyList[0] in HELP_KEYWORDS"
         statement = help_Function(newSMS, bodyList)
         return statement
-    elif (len(bodyList) > 1) and (bodyList[0] == 'me'):
+    elif (len(bodyList) > 1) and ((bodyList[0] == 'me') or (bodyList[0] == 'nze')):
         print >> sys.stderr, "inside check_SMS me"
         statement = modify_Seller(newSMS, bodyList)
         return statement
@@ -835,7 +835,7 @@ def check_SMS(newSMS):
         print >> sys.stderr, statement
         return statement
     else:
-        statement = "Walyagadde okwegatta ku lukalala lwa kataale ke'Bugolobi or create your own list? Yogerako ne Maama Zaina."
+        statement = "Obubaka tebutuuse kubuli omu! Walyagadde okwegatta ku lukalala lwa kataale ke'Bugolobi or create your own list? Yogerako ne Maama Zaina."
         # Would you like to join the Bugolobi Market Mailing List? Please talk to Maama Zaina.
         create_Outbox_Message(newSMS.number, statement)
         return statement
