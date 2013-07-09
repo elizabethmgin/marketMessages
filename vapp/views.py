@@ -981,11 +981,12 @@ def sms_to_send():
 		    print >> sys.stderr, messageList
 		    update_query = Outbox.update(sent=True).where(Outbox.id == message.id)
                     update_query.execute()
+		    # time.sleep(5)
 		    update_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.id == message.id)
                     update_query.execute()
-		    # print >> sys.stderr, message
+		    #print >> sys.stderr, message
                 else:
-                  # print >> sys.stderr, 'message has already been sent'
+                    #print >> sys.stderr, 'message has already been sent'
 		    statement = 'messages already sent'
             if messageList:
                 messageDict = create_Message_Dict(messageList)
