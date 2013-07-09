@@ -594,7 +594,7 @@ def create_Seller_Number_Association(oldNumber, newNumber):
 def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
     print >> sys.stderr, "inside check_Seller_Keywords"
     # listNames.remove('bugolobi market')
-    if ((bodyList[0] == 'tandikawo') or (bodyList[0]=='okutandikawo')) or (bodyList[0] == 'create'): # create 
+    if ((bodyList[0] == 'tandikawo') or (bodyList[0]=='okutandikawo')) or (bodyList[0] == 'start'): # create 
         print >> sys.stderr, "inside tandikawo"
         statement = create_Mini_Seller_List(newSMS)
     elif (bodyList[0] == 'okuyunga') or (bodyList[0] == 'join'): # join
@@ -629,13 +629,13 @@ def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
         else:
             statement = "Twetonda, tolina lukalala luyitibwa " + str(bodyList[1]) + ". Okutandikawo olukalala, sindika obubaka ng'ogoberera emitendera gino: Tandikawo, erinnya lyo ozzeeko e namba oe  z'oyagala okuyunga ko."
             create_Outbox_Message(newSMS.number, statement)
-	    # Sorry you dont have a list called listName. To create a list send a message following these steps- create your name and the number you want add.
+	    # Sorry you dont have a list called listName. To start a list send a message following these steps- start your name and the number you want add.
     elif (bodyList[0] == 'me') or (bodyList[0] == 'nze'):
         print >> sys.stderr, 'within check_Seller_Keywords me'
         statement = modify_Seller(newSMS, bodyList)
     else:
         statement = "Twetonda obubaka bwo tetubutegedde. Tandikawo: tandikawo olukalala lwo mu bufunze \n Yongerako: gattako olukalala olulwo \n Kuvawo: leekawo lukalala lwonna"
-        # Sorry, we didn't understand your message. tandikawo: create your own list \n Yongerako: add a number to your list \n Kuvawo: leave all mailing lists
+        # Sorry, we didn't understand your message. tandikawo: start your own list \n Yongerako: add a number to your list \n Kuvawo: leave all mailing lists
         create_Outbox_Message(newSMS.number, statement)
     return statement
 
@@ -653,9 +653,9 @@ def help_Function(newSMS, bodyList):
         statement = "Olukalala lw'omu katale k'e Bugolobi lukosobozesa okusindikira abantu obubaka. Reply with one of these keywords: okuyunga, tandikawo, yongerako" #explanation of how to join
         # The Bugolobi Market Mailing List allows you to send messages to over 40 members, but you only need to pay for one message! Instructions on how to join, etc.
         create_Outbox_Message(newSMS.number, statement)
-    elif ((bodyList[0] == 'tandikawo') or (bodyList[0]=='okutandikawo')) or (bodyList[0] == 'create'):
+    elif ((bodyList[0] == 'tandikawo') or (bodyList[0]=='okutandikawo')) or (bodyList[0] == 'start'):
         statement = "Bwoba oli memba, osobola okutandikawo olukalala lwo: 'tandikawo listname number number number'"
-        # If you are already a member, you can create your own private list: 'tandikawo listname number number number'
+        # If you are already a member, you can start your own private list: 'tandikawo listname number number number'
 	create_Outbox_Message(newSMS.number, statement)
     elif (bodyList[0] == 'yongerako') or (bodyList[0] == 'add'):
         statement = "Bwoba oli memba ku lukalala luno osobola okugatako abantu abalala ku lukalala olwo (elinnya ly'olukalala yongerako ennamba yo)"
@@ -835,7 +835,7 @@ def check_SMS(newSMS):
         print >> sys.stderr, statement
         return statement
     else:
-        statement = "Obubaka tebutuuse kubuli omu! Walyagadde okwegatta ku lukalala lwa kataale ke'Bugolobi or create your own list? Yogerako ne Maama Zaina."
+        statement = "Obubaka tebutuuse kubuli omu! Walyagadde okwegatta ku lukalala lwa kataale ke'Bugolobi or start your own list? Yogerako ne Maama Zaina."
         # Would you like to join the Bugolobi Market Mailing List? Please talk to Maama Zaina.
         create_Outbox_Message(newSMS.number, statement)
         return statement
