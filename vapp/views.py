@@ -2,31 +2,31 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from vapp import app, lm
 from peewee import *
 from models import Market, Seller, Number, SMS, List, ListRelationship, Outbox, User
-# from config import SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, POST_LOAD, GET_LOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
+from config import SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, POST_LOAD, GET_LOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
 from flask.ext.login import LoginManager, login_user, logout_user, current_user, login_required
 import requests
 import sys, datetime, json, pprint, ast
 
-SPAM = [0, 180, 727272, 456, 24273, 40404]
+# SPAM = [0, 180, 727272, 456, 24273, 40404]
 
-KEYWORDS = ['join', 'okuyunga', 'me', 'nze']
+# KEYWORDS = ['join', 'okuyunga', 'me', 'nze']
 
-SELLER_KEYWORDS = ['join', 'okuyunga', 'start', 'tandikawo', 'okutandikawo', 'kuvawo', 'leave', 'me', 'nze']
+# SELLER_KEYWORDS = ['join', 'okuyunga', 'start', 'tandikawo', 'okutandikawo', 'kuvawo', 'leave', 'me', 'nze']
 
-HELP_KEYWORDS = ['join', 'okuyunga', 'start', 'tandikawo', 'okutandikawo', 'help', 'obuyambi', 'me', 'nze', 'who', 'ani', 'yongerako', 'add']
+# HELP_KEYWORDS = ['join', 'okuyunga', 'start', 'tandikawo', 'okutandikawo', 'help', 'obuyambi', 'me', 'nze', 'who', 'ani', 'yongerako', 'add']
 
-MARKETLISTS = ['bugolobi market', 'monachello market', 'wind tunnel market']
+# MARKETLISTS = ['bugolobi market', 'monachello market', 'wind tunnel market']
 
-POST_LOAD = [{'user' : 'phone', 'pw' : 'Bug0l0b1'}]
+# POST_LOAD = [{'user' : 'phone', 'pw' : 'Bug0l0b1'}]
 
-GET_LOAD = [{'user' : 'phone', 'pw' : 's3cr3t'}]
+#GET_LOAD = [{'user' : 'phone', 'pw' : 's3cr3t'}]
 
-STATUS = ['confirmed', 'processing', 'initiated']
+# STATUS = ['confirmed', 'processing', 'initiated']
 
-ROLE_USER = 0
-ROLE_ADMIN = 1
+# ROLE_USER = 0
+# ROLE_ADMIN = 1
 
-PASSWORD = 'secret'
+# PASSWORD = 'secret'
 
 
 # simple utility function to create tables
