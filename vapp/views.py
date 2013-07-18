@@ -1022,7 +1022,7 @@ def sms_to_send():
                         print >> sys.stderr, 'sent=False outbox messages not changed to True or updated modifiedAt time'
                         break
                 else:
-                    print >> sys.stderr, 'message has already been sent'
+                    # print >> sys.stderr, 'message has already been sent'
                     statement = 'messages already sent'
             if messageList:
                 messageDict = create_Message_Dict(messageList)
