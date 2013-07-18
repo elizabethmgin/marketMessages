@@ -549,33 +549,66 @@ def modify_Seller(newSMS, bodyList):
         if len(bodyList) == 3:
             givenName = bodyList[1]
             familyName = bodyList[2]
+            givenName_query = Seller.update(givenName = givenName).where(Seller.id == seller.id)
+            givenName_query.execute()
+            familyName_query = Seller.update(familyName = familyName).where(Seller.id == seller.id)
+            familyName_query.execute()
+            now_query = Seller.update(modifiedAt = datetime.datetime.now()).where(Seller.id == seller.id)
+            now_query.execute()
+            statement = 'Obubaka bwo bukyusidwamu: ' + str(givenName) + ' ' + str(familyName) # information updated
+            create_Outbox_Message(newSMS.number, statement)
+        elif bodyList[1].isdigit(): # new Number/Seller association from message sent by associated Number
+            number = bodyList[1]
+            number = validate_Number(number)
+            if type(number) == int:
+                numberID = store_Number(number)
+                newNumber = get_Number_Object(number)
+                oldNumber = newSMS.number
+                statement = create_Seller_Number_Association(oldNumber, newNumber)
+                create_Outbox_Message(newSMS.number, statement)
+            else:
+                statement = number
+                create_Outbox_Message(newSMS.number, statement)
         else:
             givenName = bodyList[1]
-            familyName = ''
-        update_query = Seller.update(givenName = givenName).where(Seller.id == seller.id)
-        update_query.execute()
-        update_query = Seller.update(familyName = familyName).where(Seller.id == seller.id)
-        update_query.execute()
-        update_query = Seller.update(modifiedAt = datetime.datetime.now()).where(Seller.id == seller.id)
-        update_query.execute()
-        statement = 'Obubaka bwo bukyusidwamu: ' + str(givenName) + ' ' + str(familyName)
-	# information updated
-        create_Outbox_Message(newSMS.number, statement)
+            givenName_query = Seller.update(givenName = givenName).where(Seller.id == seller.id)
+            givenName_query.execute()
+            now_query = Seller.update(modifiedAt = datetime.datetime.now()).where(Seller.id == seller.id)
+            now_query.execute()
+            statement = 'Obubaka bwo bukyusidwamu: ' + str(givenName) + ' ' + str(seller.familyName)# information updated
+            create_Outbox_Message(newSMS.number, statement)
         return statement
     else:
         print >> sys.stderr, "within incoming_SMS, seller does not exist, create!"
         if len(bodyList) == 3:
             givenName = bodyList[1]
             familyName = bodyList[2]
+            newSeller = Seller(givenName = givenName, familyName = familyName)
+            newSeller.save()
+            update_query = Number.update(seller=newSeller).where(Number.number == newSMS.number.number)
+            update_query.execute()
+            statement = 'Obubaka bwo bukyusidwamu: ' + str(givenName) + ' ' + str(familyName)
+            create_Outbox_Message(newSMS.number, statement)
+        elif bodyList[1].isdigit(): # new Number/Seller association from message sent by unassociated Number
+            number = bodyList[1]
+            number = validate_Number(number)
+            if type(number) == int:
+                oldNumber = get_Number_Object(number)
+                newNumber = newSMS.number
+                statement = create_Seller_Number_Association(oldNumber, newNumber)
+                create_Outbox_Message(newSMS.number, statement)
+            else:
+                statement = number
+                create_Outbox_Message(newSMS.number, statement)
         else:
             givenName = bodyList[1]
             familyName = ''
-        newSeller = Seller(givenName = givenName, familyName = familyName)
-        newSeller.save()
-        update_query = Number.update(seller=newSeller).where(Number.number == newSMS.number.number)
-        update_query.execute()
-        statement = 'Information updated: ' + str(givenName) + ' ' + str(familyName)
-        create_Outbox_Message(newSMS.number, statement)
+            newSeller = Seller(givenName = givenName, familyName = familyName)
+            newSeller.save()
+            update_query = Number.update(seller=newSeller).where(Number.number == newSMS.number.number)
+            update_query.execute()
+            statement = 'Obubaka bwo bukyusidwamu: ' + str(givenName) + ' ' + str(familyName)
+            create_Outbox_Message(newSMS.number, statement)
         return statement
 
 
@@ -603,16 +636,6 @@ def check_Seller_Keywords(newSMS, bodyList, seller, listNames):
         else:
             statement = "Okimanyi nti e nnamba eno wagiwaandiisa dda ku lukalala?" # do you know you've already registered?
             create_Outbox_Message(newSMS.number, statement)
-    elif bodyList[0].isdigit(): # new number / seller association sent from seller's associated number
-        number = bodyList[0]
-        number = validate_Number(number)
-        if type(number) == int:
-            numberID = store_Number(number)
-            newNumber = get_Number_Object(number)
-            oldNumber = newSMS.number
-            statement = create_Seller_Number_Association(oldNumber, newNumber)
-        else:
-            statement = number
     elif (bodyList[0] == 'kuvawo') or (bodyList[0] == 'leave'): # leave
         print >> sys.stderr, "inside elif kuvawo"
         statement = deactivate_Number(newSMS) # leave all lists
@@ -795,17 +818,6 @@ def check_SMS(newSMS):
     elif (bodyList[0] == 'kuvawo') or (bodyList[0] == 'leave'):
         statement = deactivate_Number(newSMS) # leave all lists
         return statement
-    elif bodyList[0].isdigit(): # new Number/Seller association from message sent by unassociated Number
-        number = bodyList[0]
-        number = validate_Number(number)
-        if type(number) == int:
-            oldNumber = get_Number_Object(number)
-            newNumber = newSMS.number
-            statement = create_Seller_Number_Association(oldNumber, newNumber)
-            return statement
-        else:
-            statement = number
-            return statement
     elif check_Seller_Exists(newSMS.number):
         print >> sys.stderr, "inside check_SMS check_Seller_Exists"
         seller = get_Seller(newSMS.number)
@@ -975,31 +987,41 @@ def sms_to_send():
             messageList = []
             for message in Outbox.select():
                 if message.sent == False:
-                    mlist = [message.number.number, message.body]
-                    messageList.append(mlist)
-                    print >> sys.stderr, messageList
                     for x in range(0,20):
                         try: 
                             print >> sys.stderr, 'within sent=True try'
-                            update_query = Outbox.update(sent=True).where(Outbox.id == message.id)
-                            update_query.execute()
+                            sent_query = Outbox.update(sent=True).where(Outbox.id == message.id)
+                            sent_output = sent_query.execute()
                             print >> sys.stderr, 'i guess that worked'
                             break
                         except:
                             print >> sys.stderr, 'within sent=True except'
-                            print >> sys.stderr, 'that didnt work'
+                            if x == 19:
+                                print >> sys.stderr, 'sent=True WARNING!'
+                            else:
+                                print >> sys.stderr, 'that didnt work'
                     for x in range(0,20):
                         try:
                             print >> sys.stderr, 'within modifiedAt try'
-                            update_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.id == message.id)
-                            update_query.execute()
+                            modify_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.id == message.id)
+                            modify_output = modify_query.execute()
                             print >> sys.stderr, 'i guess that worked'
                             break
                         except:
                             print >> sys.stderr, 'within modifiedAt except'
-                            print >> sys.stderr, 'that didnt work'
+                            if x == 19:
+                                print >> sys.stderr, 'modifiedAt WARNING!'
+                            else:
+                                print >> sys.stderr, 'that didnt work'
+                    if (sent_output == 1) and (modify_output == 1):
+                        mlist = [message.number.number, message.body]
+                        messageList.append(mlist)
+                        print >> sys.stderr, messageList
+                    else:
+                        print >> sys.stderr, 'sent=False outbox messages not changed to True or updated modifiedAt time'
+                        break
                 else:
-                    # print >> sys.stderr, 'message has already been sent'
+                    print >> sys.stderr, 'message has already been sent'
                     statement = 'messages already sent'
             if messageList:
                 messageDict = create_Message_Dict(messageList)
