@@ -941,7 +941,7 @@ def index(password):
 @app.route('/sms_received/', methods=['POST', 'GET'])
 def sms_received():
     if request.method == 'POST':
-        print >> sys.stderr, "Received POST request to marketMessages/sms_received/"
+        print >> sys.stderr, "Received POST request to LOCAL marketMessages/sms_received/"
         try:
             print >> sys.stderr, "within try"
             auth = request.args.get('auth')
@@ -981,7 +981,7 @@ def sms_received():
 @app.route('/sms_to_send/', methods=['POST', 'GET'])
 def sms_to_send():
     if request.method == 'GET':
-        print >> sys.stderr, "Received GET request to marketMessages/sms_to_send/"
+        print >> sys.stderr, "Received GET request to LOCAL marketMessages/sms_to_send/"
         try:
             print >> sys.stderr, "within try"
             messageList = []
@@ -1014,6 +1014,7 @@ def sms_to_send():
                             else:
                                 print >> sys.stderr, 'that didnt work'
                     if (sent_output == 1) and (modify_output == 1):
+                        print >> sys.stderr, 'within if sent_output and modify_output'
                         mlist = [message.number.number, message.body]
                         messageList.append(mlist)
                         print >> sys.stderr, messageList

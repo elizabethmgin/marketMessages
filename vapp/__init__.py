@@ -35,8 +35,8 @@ lm.login_view = 'login'
 from vapp.models import *
 from vapp import views
 
-if __name__ == "__main__":
-    app.run()
+# if __name__ == "__main__":
+#     app.run()
 
 
 
