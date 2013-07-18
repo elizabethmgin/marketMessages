@@ -6,7 +6,9 @@ from config import PATH_NAME, DATABASE
 
 # PATH_NAME = '/home/ginontherocks/public_python/marketMessages/deploy'
 # DATABASE = '/home/ginontherocks/public_python/marketMessages/deploy/vapp/Uganda06212013.db'
-os.chdir(PATH_NAME)
+# os.chdir(PATH_NAME)
+
+DATABASE = 'USATest.db'
 
 
 s = os.getcwd()
@@ -32,6 +34,9 @@ lm.login_view = 'login'
 
 from vapp.models import *
 from vapp import views
+
+if __name__ == "__main__":
+    app.run()
 
 
 
