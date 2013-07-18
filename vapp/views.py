@@ -1014,6 +1014,7 @@ def sms_to_send():
                             else:
                                 print >> sys.stderr, 'that didnt work'
                     if (sent_output == 1) and (modify_output == 1):
+                        print >> sys.stderr, 'within if sent_output and modify_output'
                         mlist = [message.number.number, message.body]
                         messageList.append(mlist)
                         print >> sys.stderr, messageList
