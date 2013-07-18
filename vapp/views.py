@@ -975,26 +975,32 @@ def sms_to_send():
             messageList = []
             for message in Outbox.select():
                 if message.sent == False:
-		    #print >> sys.stderr, message
-		    mlist = [message.number.number, message.body]
+                    mlist = [message.number.number, message.body]
                     messageList.append(mlist)
-		    print >> sys.stderr, messageList
-		    update_query = Outbox.update(sent=True).where(Outbox.id == message.id)
-                    update_query.execute()
-		    # time.sleep(5)
-		    update_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.id == message.id)
-                    update_query.execute()
-		    #print >> sys.stderr, message
+                    print >> sys.stderr, messageList
+                    try: 
+                        print >> sys.stderr, 'within sent=True try'
+                        update_query = Outbox.update(sent=True).where(Outbox.id == message.id)
+                        update_query.execute()
+                        print >> sys.stderr, 'i guess that worked'
+                        break
+                    except:
+                        print >> sys.stderr, 'within sent=True except'
+                        print >> sys.stderr, 'that didnt work'
+                    try:
+                        print >> sys.stderr, 'within modifiedAt try'
+                        update_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.id == message.id)
+                        update_query.execute()
+                        print >> sys.stderr, 'i guess that worked'
+                        break
+                    except:
+                        print >> sys.stderr, 'within modifiedAt except'
+                        print >> sys.stderr, 'that didnt work'
                 else:
-                    #print >> sys.stderr, 'message has already been sent'
-		    statement = 'messages already sent'
+                    # print >> sys.stderr, 'message has already been sent'
+                    statement = 'messages already sent'
             if messageList:
                 messageDict = create_Message_Dict(messageList)
-		# for message in Outbox.select():
-		    # update_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.sent == False)
-                    # update_query.execute()
-		    # update_query = Outbox.update(sent=True).where(Outbox.sent == False)
-                    # update_query.execute()
             else:
                 mStr = 'no new messages'
                 messageList.append(mStr)
