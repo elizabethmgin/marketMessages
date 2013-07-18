@@ -978,8 +978,8 @@ def sms_to_send():
                     mlist = [message.number.number, message.body]
                     messageList.append(mlist)
                     print >> sys.stderr, messageList
-                    x = 0
-                    for x in range(0):
+                    x = 2
+                    for x in range(2,20):
                         try: 
                             print >> sys.stderr, 'within sent=True try'
                             update_query = Outbox.update(sent=True).where(Outbox.id == message.id)
@@ -988,8 +988,8 @@ def sms_to_send():
                         except:
                             print >> sys.stderr, 'within sent=True except'
                             print >> sys.stderr, 'that didnt work'
-                    x = 0
-                    for x in range(0):
+                    x = 2
+                    for x in range(2,20):
                         try:
                             print >> sys.stderr, 'within modifiedAt try'
                             update_query = Outbox.update(modifiedAt=datetime.datetime.now()).where(Outbox.id == message.id)
