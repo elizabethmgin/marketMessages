@@ -282,7 +282,7 @@ def add_Numbers(listObject, numberList, createdBy):
                 # this phone number was added to your list by
                 create_Outbox_Message(ownerNumberObject, statement)
 	    if numberObject.seller:
-                memberStatement = str(identity) + ", memba ku Bugolobi Mailing List, akuyunze kulukalala luno: " + str(listObject.name) + ". Okuddamu eri bonna, tandika obubaka bwo n'ekigambo '" + str(listObject.name) + "' oba '"+ str(listObject.name) + " owner'"
+                memberStatement = str(identity) + ", memba ku Bugolobi Mailing List, akuyunze kulukalala luno: " + str(listObject.name) + ". Okuddamu eri bonna, tandika obubaka bwo n'ekigambo '" + str(listObject.name) + "' oba '"+ str(listObject.name) + " omutandisi'"
                 # someone added you to the following list.
 		create_Outbox_Message(numberObject, memberStatement)
 	    else:
@@ -785,7 +785,7 @@ def check_SMS(newSMS):
             whoStr = query_ListRelationship(listName)
             create_Outbox_Message(newSMS.number, str(whoStr))
             return whoStr
-        elif (bodyList[0] == 'owner'):
+        elif (bodyList[0] == 'owner') or (bodyList[0] == 'omutandisi'):
             print >> sys.stderr, 'meant only to go to creator of mini list'
             body = ' '.join(str(n) for n in bodyList)
             identity = form_Identity(newSMS.number)
@@ -797,7 +797,7 @@ def check_SMS(newSMS):
             create_Outbox_Message(newSMS.number, statement)
             return message
         elif (len(bodyList) == 0) or (bodyList[0] =='help') or (bodyList[0] == 'obuyambi'):
-            statement = "Obubaka tebutuuse kubuli omu! Tandika obubakabwo ne '" + listName + "' oba '" + listName + " owner' oba '" + listName + " ani' "
+            statement = "Obubaka tebutuuse kubuli omu! Tandika obubakabwo ne '" + listName + "' oba '" + listName + " omutandisi' oba '" + listName + " ani' "
             # That message didn't go to anyone! Either begin your message with listName or listName owner or listName who
 	    create_Outbox_Message(newSMS.number, statement)
             return statement
