@@ -2,7 +2,7 @@ from flask import Flask
 from peewee import *
 import os,sys
 from flask.ext.login import LoginManager
-from config import PATH_NAME, DATABASE
+# from config import PATH_NAME, DATABASE
 
 # PATH_NAME = '/home/ginontherocks/public_python/marketMessages/deploy'
 # DATABASE = '/home/ginontherocks/public_python/marketMessages/deploy/vapp/Uganda06212013.db'
