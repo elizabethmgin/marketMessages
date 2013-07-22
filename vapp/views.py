@@ -5,7 +5,7 @@ from models import Market, Seller, Number, SMS, List, ListRelationship, Outbox, 
 from config import SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, POST_LOAD, GET_LOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
 from flask.ext.login import LoginManager, login_user, logout_user, current_user, login_required
 import requests
-import sys, datetime, json, pprint, ast, math
+import sys, datetime, json, pprint, ast
 
 # SPAM = [0, 180, 727272, 456, 24273, 40404]
 
