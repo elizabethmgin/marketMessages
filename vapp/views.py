@@ -5,7 +5,7 @@ from models import Market, Seller, Number, SMS, List, ListRelationship, Outbox, 
 from config import SPAM, KEYWORDS, SELLER_KEYWORDS, HELP_KEYWORDS, MARKETLISTS, POST_LOAD, GET_LOAD, STATUS, ROLE_USER, ROLE_ADMIN, PASSWORD
 from flask.ext.login import LoginManager, login_user, logout_user, current_user, login_required
 import requests
-import sys, datetime, json, pprint, ast
+import sys, datetime, json, pprint, ast, math
 
 # SPAM = [0, 180, 727272, 456, 24273, 40404]
 
@@ -74,8 +74,11 @@ def create_Number_List():
 # get number from incoming SMS message
 # return number as integer
 def create_Number(message):
-    number = int(message['address'])
-    return number
+    try:
+        number = int(message['address'])
+        return number
+    except ValueError, Argument:
+        print >> sys.stderr, "The argument does not contain numbers\n", Argument
 
 # pass number
 # return validated number
@@ -123,6 +126,53 @@ def get_Number_Object(number):
 def get_List_Object(market):
     listObject = List.get(List.market == market)
     return listObject
+    
+        
+def cut_SMS(message):
+    print >> sys.stderr, "within cut_SMS"
+    texts = []
+    count = 0
+    x = 0
+    current_text = []
+    cutSMSList = message.split()
+    lenList = len(cutSMSList)
+    print 'LEN LIST: ' + str(lenList)
+    indexList = lenList - 1
+    print 'INDEX LIST: ' + str(indexList)
+    if len(message) > 130:
+        print >> sys.stderr, "message > 130"
+        for word in cutSMSList:
+            print word
+            print 'INDEX OF WORD: ' + str(cutSMSList.index(word))
+            if (count + len(word) < 130) and (x == indexList):
+                current_text.append(word)
+                print 'CURRENT TEXT LIST: ' + str(current_text)
+                count += (len(word) + 1)
+                print 'CURRENT COUNT: ' + str(count)
+                texts.append(" ".join(current_text))
+                print 'CURRENT TEXTS COMBINED LIST: ' + str(texts)
+                x += 1
+            elif (count + len(word) < 130) and (x < indexList):
+                current_text.append(word)
+                print 'CURRENT TEXT LIST: ' + str(current_text)
+                count += (len(word) + 1)
+                print 'CURRENT COUNT: ' + str(count)
+                x += 1
+            else:
+                texts.append(" ".join(current_text))
+                print 'CURRENT TEXTS COMBINED LIST: ' + str(texts)
+                count = 0
+                current_text = []
+                current_text.append(word)
+                print 'CURRENT TEXT LIST: ' + str(current_text)
+                count += (len(word) + 1)
+                print 'CURRENT COUNT: ' + str(count)
+                x += 1
+    else:
+        print >> sys.stderr, "message < 130"
+        texts.append(message)
+        print texts
+    return texts
 
 # receive incoming SMS message and store
 # return SMS object
@@ -162,7 +212,7 @@ def store_Seller(newSMS):
         try:
             print >> sys.stderr, "within store seller else try"
             bodyList = split_Body(newSMS)
-            if len(bodyList) > 2:
+            if len(bodyList) > 3:
                 print >> sys.stderr, "within store seller else if"
                 newSeller = Seller(givenName = bodyList[1], familyName = bodyList[2], product = bodyList[3], market = 1)
                 newSeller.save()
@@ -282,12 +332,13 @@ def add_Numbers(listObject, numberList, createdBy):
                 # this phone number was added to your list by
                 create_Outbox_Message(ownerNumberObject, statement)
 	    if numberObject.seller:
-                memberStatement = str(identity) + ", memba ku Bugolobi Mailing List, akuyunze kulukalala luno: " + str(listObject.name) + ". Okuddamu eri bonna, tandika obubaka bwo n'ekigambo '" + str(listObject.name) + "' oba '"+ str(listObject.name) + " owner'"
+                memberStatement = str(identity) + " akuyunze kulukalala luno: " + str(listObject.name) + ". Okuddamu eri bonna, tandika obubaka bwo n'ekigambo '" + str(listObject.name) + "' oba '"+ str(listObject.name) + " owner'"
                 # someone added you to the following list.
 		create_Outbox_Message(numberObject, memberStatement)
 	    else:
-		nonmemberStatement = str(identity) + ", memba ku Bugolobi Mailing List, akuyunze kulukalala luno: " + str(listObject.name) + ". Okulambika ebikwatako tandika obubaka bwo n'ekigambo Nze. (Okugeza: Nze erinnya ly'ekika erinnya epatiike)"
+		nonmemberStatement = str(identity) + " akuyunze kulukalala luno: " + str(listObject.name) + ". Okulambika ebikwatako tandika obubaka bwo n'ekigambo Nze. (Okugeza: Nze erinnya ly'ekika erinnya epatiike)"
                 # someone added you to the following list, to se your identity, start your message with ME. (i.e. ME familyName givenName)
+                # removed memba ku Bugolobi Mailing List
                 create_Outbox_Message(numberObject, nonmemberStatement)
     return statement
 
@@ -401,20 +452,26 @@ def promote_SMS(newSMS, sellersListName):
         sellersListNumbers = get_Mini_Sellers_ListNumbers(sellersListName) # gets all the numbers on a mini list, but this does not include the owner/creator's number!!
         print >> sys.stderr, sellersListNumbers
         print >> sys.stderr, newSMS.body
+        texts = []
         if not newSMS.body:
             message = identity + ' agamba: Omuntu omulala asobola okunnymbako okuweereza obubaka?' 
             # Can someone please help me send a message?
         else: 
             message = identity + ' agamba: ' + newSMS.body
+            if len(message) > 160:
+                texts = cut_SMS(message)
+            else:
+                texts.append(message)    
         sendersNumber = newSMS.number
         print >> sys.stderr, sendersNumber
         sellersListNumbers = remove_Senders_Number(sellersListName, sellersListNumbers, sendersNumber) # remove the senders number from the mini list
         # print >> sys.stderr, sellersListNumbers
         for number in sellersListNumbers:
             if number.isActive == True:
-                statement = str(message) + " sent to " + str(number)
-                create_Outbox_Message(number, message)
-                # print >> sys.stderr, statement
+                for text in texts:
+                    statement = str(text) + " sent to " + str(number)
+                    create_Outbox_Message(number, text)
+                    print >> sys.stderr, statement
             else:
                 statement = "This seller is inactive and will not receive the message."
                 print >> sys.stderr, statement
@@ -426,7 +483,7 @@ def promote_SMS(newSMS, sellersListName):
     else:
         statement = "Obubaka bwo tebugenze kubanga enamba yo ebadde tekozesebwa. Bw'oba oyagala okuwadiisa enamba yo ddmu n'ekigambo 'okuyunga'"
         # Your message was not sent because your number is not active. If you would like to re-activate your number, reply with 'okuyunga'
-	create_Outbox_Message(sendersNumber, statement)
+        create_Outbox_Message(sendersNumber, statement)
     return statement
 
 # pass sellersListName, sellersListNumbers, and sendersNumber
@@ -986,7 +1043,7 @@ def sms_to_send():
             print >> sys.stderr, "within try"
             messageList = []
             for message in Outbox.select():
-                if message.sent == False:
+                if (message.sent == False) and len(messageList) < 8:
                     for x in range(0,20):
                         try: 
                             print >> sys.stderr, 'within sent=True try'
@@ -1023,7 +1080,7 @@ def sms_to_send():
                         break
                 else:
                     # print >> sys.stderr, 'message has already been sent'
-                    statement = 'messages already sent'
+                    statement = 'messageList full'
             if messageList:
                 messageDict = create_Message_Dict(messageList)
             else:
