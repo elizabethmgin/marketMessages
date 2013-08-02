@@ -180,9 +180,12 @@ def cut_SMS(message):
 def store_SMS(message):
     print >> sys.stderr, "within store SMS"
     number = create_Number(message) # gets number from incoming SMS
-    numberID = store_Number(number) # creates and stores number as Number object
-    newSMS = SMS(sms_id = message['_id'], body = message['body'].lower(), date = message['date'], number = numberID)
-    newSMS.save()
+    if number is not None:
+        numberID = store_Number(number) # creates and stores number as Number object
+        newSMS = SMS(sms_id = message['_id'], body = message['body'].lower(), date = message['date'], number = numberID)
+        newSMS.save()
+    else:
+        newSMS = 'stop'
     return newSMS
 
 # create Market object
@@ -596,7 +599,10 @@ def incoming_SMS(message):
     print >> sys.stderr, "within incoming_SMS"
     newSMS = store_SMS(message) # stores incoming SMS
     print >> sys.stderr, "within incoming_SMS, after store_SMS"
-    statement = check_SMS(newSMS)
+    if newSMS == 'stop':
+        statement = 'that was probably a message from MTN'
+    else:
+        statement = check_SMS(newSMS)
     return statement
 
 def modify_Seller(newSMS, bodyList):
